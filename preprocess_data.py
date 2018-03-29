@@ -49,10 +49,14 @@ def download_files(files, url, location):
 
 def parse_xml(location):
     for subdir, dirs, files in os.walk(location):
-        if file.endswith(".xml"):
-            xml_file = minidom.parse(location + file)
-            sentence_node = xml_file.getElementByTagName('sentence')
-            print(sentence_node.textContent)
+        for file in files:
+            if file.endswith(".xml"):
+                with open(subdir + "/" + file, buffering=200000) as xml_file:
+                    for line in xml_file:
+                        line = line.rstrip()
+                        if "</" in line and not line[1:2] == "/":
+                            node = minidom.parseString(line)
+                            print(node.getElementsByTagName('w')[0].firstChild.nodeValue)
 
-download_files(FILES, URL, DATA_LOCATION)
+#download_files(FILES, URL, DATA_LOCATION)
 parse_xml(DATA_LOCATION)
