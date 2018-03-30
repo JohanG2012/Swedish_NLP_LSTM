@@ -4,6 +4,8 @@ import urllib.request
 import tarfile
 import bz2
 from xml.dom import minidom
+import pickle
+import datetime as dt
 
 # Contants
 DATA_LOCATION = "./data/"
@@ -48,6 +50,11 @@ def download_files(files, url, location):
         extract_files(location, file)
 
 def parse_xml(location):
+    data = list()
+    log_every = 30000
+    line_num = 0
+    start_time = dt.datetime.now()
+
     for subdir, dirs, files in os.walk(location):
         for file in files:
             if file.endswith(".xml"):
@@ -55,8 +62,17 @@ def parse_xml(location):
                     for line in xml_file:
                         line = line.rstrip()
                         if "</" in line and not line[1:2] == "/":
+                            line_num += 1
                             node = minidom.parseString(line)
-                            print(node.getElementsByTagName('w')[0].firstChild.nodeValue)
+                            data.append(node.getElementsByTagName('w')[0].firstChild.nodeValue)
+                            if line_num == log_every:
+                                print("{0} words has been added to the vocabulary. {1}% of 100%".format(len(data), round((len(data) / 1000000000) * 100, 3)))
+                                log_every += 30000
+                with open(location + "vocalbulary.pkl", "wb") as pkl:
+                    pickle.dump(data, pkl)
+                os.remove(subdir + "/" + file)
+    end_time = dt.datetime.now()
+    print("Reading data took {} minutes to run.".format((end_time-start_time).total_seconds() / 60.0))
 
 #download_files(FILES, URL, DATA_LOCATION)
 parse_xml(DATA_LOCATION)
