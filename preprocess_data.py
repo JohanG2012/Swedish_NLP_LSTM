@@ -4,8 +4,11 @@ import urllib.request
 import tarfile
 import bz2
 from xml.dom import minidom
+from xml import sax
+import re
 import pickle
 import datetime as dt
+from bs4 import BeautifulSoup
 
 # Contants
 DATA_LOCATION = "./data/"
@@ -18,6 +21,7 @@ DATA_1990 = "gigaword-1990-99.tar"
 DATA_2000 = "gigaword-2000-09.tar"
 DATA_2010 = "gigaword-2010-15.tar"
 FILES = [DATA_1950, DATA_1960, DATA_1970, DATA_1980, DATA_1990, DATA_2000, DATA_2010]
+#FILES = [DATA_1950]
 
 def download(file, url, location):
 
@@ -62,6 +66,41 @@ def download_files(files, url, location):
         print("Extracting files...")
         extract_files(location, file)
 
+data = ''
+
+def parse_to_plaintext(location):
+    start_time = dt.datetime.now()
+    for subdir, dirs, files in os.walk(location):
+        for file in files:
+            if file.endswith('.xml'):
+                with open(subdir + '/' + file, buffering=200000) as xml_file:
+                    def numrepl(matchobj):
+                        numbers = {'0': 'noll', '1':'ett', '2':'två', '3':'tre','4':'fyra','5':'fem','6':'sex','7':'sju','8':'åtta','9':'nio'}
+                        return numbers[matchobj.group(0)] + ' '
+                        
+                    r = re.compile('<[^>]*>')
+                    n = re.compile('\n')
+                    s = re.compile('[^A-Za-z0-9ÅÄÖÉåäöé ]')
+                    p = re.compile(' +')
+                    num = re.compile('\d')
+                    print('Removing w tags...')
+                    data = r.sub('',xml_file.read())
+                    print('Converting newline to spaces...')
+                    data = n.sub(' ',data)
+                    print('Stripping special characters...')
+                    data = s.sub('',data)
+                    print('Converting numbers to words...')
+                    data = num.sub(numrepl, data)
+                    print('Converting multiple spaces to single spaces...')
+                    data = p.sub(' ',data)
+                    print('Converting to lowercase...')
+                    data = data.lower()
+                with open(location + "vocabulary.pkl", "ab") as pkl:
+                    print("Writing data to pickle...")
+                    pickle.dump(data, pkl)
+                end_time = dt.datetime.now()
+                print("Reading words took {} minutes to run.".format((end_time-start_time).total_seconds() / 60.0))
+
 def parse_xml(location):
     print("Parsing XML to vocabulary pickle...")
     print("Parsing one billion words, this might take some time...")
@@ -76,6 +115,7 @@ def parse_xml(location):
             if file.endswith(".xml"):
                 with open(subdir + "/" + file, buffering=200000) as xml_file:
                     print("Processing: " + subdir + "/" + file)
+                    soup = BeautifulSoup(xml_file, 'xml.parser')
                     for line in xml_file:
                         line = line.rstrip()
 
@@ -99,4 +139,6 @@ def parse_xml(location):
     print("Reading data took {} minutes to run.".format((end_time-start_time).total_seconds() / 60.0))
 
 download_files(FILES, URL, DATA_LOCATION)
-parse_xml(DATA_LOCATION)
+#parse_xml(DATA_LOCATION)
+parse_to_plaintext(DATA_LOCATION)
+parse_soup(DATA_LOCATION)
