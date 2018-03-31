@@ -184,6 +184,7 @@ def hacky_hack(location):
             if file.endswith(".xml"):
                 with open(subdir + "/" + file, buffering=200000) as xml_file:
                     sentences = ''
+                    named_entities = []
                     words = 0
                     start_time = dt.datetime.now()
                     print("Processing: " + subdir + "/" + file)
@@ -192,12 +193,13 @@ def hacky_hack(location):
                     context = iter(context)
                     event, root = next(context)
                     for event, element in context:
-                        if event == 'end' and element.tag == 'w':
+                        if event == 'end' and element.tag == 'ne' and element.attrib['ex'] == 'ENAMEX':
+                            named_entities.append(element.attrib['name'])
+                        elif event == 'end' and element.tag == 'w':
                             sentences += str(element.text + ' ')
                             element.clear()
                             root.clear()
                             words += 1
-                            #print(element.text)
                         elif event == 'end' and element.tag == 'sentence':
                             sentences += '\n'
                             element.clear()
@@ -206,8 +208,11 @@ def hacky_hack(location):
                     total_seconds = (end_time-start_time).total_seconds()
                     print("Reading {} words took {} minutes to run. ({} words / second)".format(words, total_seconds / 60.0, words/total_seconds))
                     with open(location + '/vocabulary.pkl', 'ab') as pkl:
-                        print('Writing data to pickle...')
+                        print('Writing sentences to pickle...')
                         pickle.dump(sentences, pkl)
+                    with open(location + '/vocabulary_named_entities.pkl', 'ab') as pne:
+                        print('Writing named entities to pickle...')
+                        pickle.dump(named_entities, pne)
 
 #download_files(DOWNLOAD_FILES, URL, DATA_LOCATION)
 #parse_xml(DATA_LOCATION)
