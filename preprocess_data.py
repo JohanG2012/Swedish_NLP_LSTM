@@ -136,7 +136,6 @@ def parse_xml(location):
     print("Parsing one billion words, this might take some time...")
     data = list()
     log_every = 100000
-    line_num = 0
     start_time = dt.datetime.now()
     data_length = 0
 
@@ -145,17 +144,15 @@ def parse_xml(location):
             if file.endswith(".xml"):
                 with open(subdir + "/" + file, buffering=200000) as xml_file:
                     print("Processing: " + subdir + "/" + file)
-                    soup = BeautifulSoup(xml_file, 'xml.parser')
                     for line in xml_file:
                         line = line.rstrip()
 
                         # Check if not a row with only a start or end tag i.e sentences
                         if "</" in line and not line[1:2] == "/":
-                            line_num += 1
                             node = minidom.parseString(line)
                             data_length += 1
                             data.append(node.getElementsByTagName('w')[0].firstChild.nodeValue)
-                            if line_num == log_every:
+                            if data_length == log_every:
                                 print("{0} words has been added to the vocabulary. {1}% of 100%".format(data_length, round((data_length / 1000000000) * 100, 3)))
                                 log_every += 100000
                 with open(location + "vocalbulary.pkl", "ab") as pkl:
