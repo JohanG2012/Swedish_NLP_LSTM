@@ -8,7 +8,6 @@ from xml import sax
 import re
 import pickle
 import datetime as dt
-from bs4 import BeautifulSoup
 
 # Contants
 DATA_LOCATION = "./data/"
@@ -20,7 +19,37 @@ DATA_1980 = "gigaword-1980-89.tar"
 DATA_1990 = "gigaword-1990-99.tar"
 DATA_2000 = "gigaword-2000-09.tar"
 DATA_2010 = "gigaword-2010-15.tar"
+GP_1994 = "gp1994.xml.bz2"
+GP_2001 = "gp2001.xml.bz2"
+GP_2002 = "gp2002.xml.bz2"
+GP_2003 = "gp2003.xml.bz2"
+GP_2004 = "gp2004.xml.bz2"
+GP_2005 = "gp2005.xml.bz2"
+GP_2006 = "gp2006.xml.bz2"
+GP_2007 = "gp2007.xml.bz2"
+GP_2008 = "gp2008.xml.bz2"
+GP_2009 = "gp2009.xml.bz2"
+GP_2010 = "gp2010.xml.bz2"
+GP_2011 = "gp2011.xml.bz2"
+GP_2012 = "gp2012.xml.bz2"
+GP_2013 = "gp2013.xml.bz2"
+GP_2D = "gp2d.xml.bz2"
+WN_2001 = "webbnyheter2001.xml.bz2"
+WN_2002 = "webbnyheter2002.xml.bz2"
+WN_2003 = "webbnyheter2003.xml.bz2"
+WN_2004 = "webbnyheter2004.xml.bz2"
+WN_2005 = "webbnyheter2005.xml.bz2"
+WN_2006 = "webbnyheter2006.xml.bz2"
+WN_2007 = "webbnyheter2007.xml.bz2"
+WN_2008 = "webbnyheter2008.xml.bz2"
+WN_2009 = "webbnyheter2009.xml.bz2"
+WN_2010 = "webbnyheter2010.xml.bz2"
+WN_2011 = "webbnyheter2011.xml.bz2"
+WN_2012 = "webbnyheter2012.xml.bz2"
+WN_2013 = "webbnyheter2013.xml.bz2"
 FILES = [DATA_1950, DATA_1960, DATA_1970, DATA_1980, DATA_1990, DATA_2000, DATA_2010]
+WN_FILES = [WN_2001, WN_2002, WN_2003, WN_2004, WN_2005, WN_2006, WN_2007, WN_2008, WN_2009, WN_2010, WN_2011, WN_2012, WN_2013]
+GP_FILES = [GP_1994, GP_2001, GP_2002, GP_2003, GP_2004, GP_2005, GP_2006, GP_2007, GP_2008, GP_2009, GP_2010, GP_2011, GP_2012, GP_2013, GP_2D]
 #FILES = [DATA_1950]
 
 def download(file, url, location):
@@ -73,11 +102,11 @@ def parse_to_plaintext(location):
     for subdir, dirs, files in os.walk(location):
         for file in files:
             if file.endswith('.xml'):
-                with open(subdir + '/' + file, buffering=200000) as xml_file:
+                with open(subdir + '/' + file, buffering=2000) as xml_file:
                     def numrepl(matchobj):
                         numbers = {'0': 'noll', '1':'ett', '2':'två', '3':'tre','4':'fyra','5':'fem','6':'sex','7':'sju','8':'åtta','9':'nio'}
                         return numbers[matchobj.group(0)] + ' '
-                        
+
                     r = re.compile('<[^>]*>')
                     n = re.compile('\n')
                     s = re.compile('[^A-Za-z0-9ÅÄÖÉåäöé ]')
@@ -95,10 +124,11 @@ def parse_to_plaintext(location):
                     data = p.sub(' ',data)
                     print('Converting to lowercase...')
                     data = data.lower()
-                with open(location + "vocabulary.pkl", "ab") as pkl:
+                with open(location + "vocabulary_plain.pkl", "ab") as pkl:
                     print("Writing data to pickle...")
                     pickle.dump(data, pkl)
                 end_time = dt.datetime.now()
+                os.remove(subdir + '/' + file)
                 print("Reading words took {} minutes to run.".format((end_time-start_time).total_seconds() / 60.0))
 
 def parse_xml(location):
@@ -138,7 +168,6 @@ def parse_xml(location):
     end_time = dt.datetime.now()
     print("Reading data took {} minutes to run.".format((end_time-start_time).total_seconds() / 60.0))
 
-download_files(FILES, URL, DATA_LOCATION)
+#download_files(FILES, URL, DATA_LOCATION)
 #parse_xml(DATA_LOCATION)
 parse_to_plaintext(DATA_LOCATION)
-parse_soup(DATA_LOCATION)
