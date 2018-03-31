@@ -183,6 +183,9 @@ def hacky_hack(location):
         for file in files:
             if file.endswith(".xml"):
                 with open(subdir + "/" + file, buffering=200000) as xml_file:
+                    sentences = ''
+                    words = 0
+                    start_time = dt.datetime.now()
                     print("Processing: " + subdir + "/" + file)
                     #tree = ET.fromstring(re.sub(r"(<\?xml[^>]+\?>)", r"\1<root>", xml_file) + "</root>")
                     context = ET.iterparse(xml_file, events=('start','end'))
@@ -190,7 +193,21 @@ def hacky_hack(location):
                     event, root = next(context)
                     for event, element in context:
                         if event == 'end' and element.tag == 'w':
-                            print(element.text)
+                            sentences += str(element.text + ' ')
+                            element.clear()
+                            root.clear()
+                            words += 1
+                            #print(element.text)
+                        elif event == 'end' and element.tag == 'sentence':
+                            sentences += '\n'
+                            element.clear()
+                            root.clear()
+                    end_time = dt.datetime.now()
+                    total_seconds = (end_time-start_time).total_seconds()
+                    print("Reading {} words took {} minutes to run. ({} words / second)".format(words, total_seconds / 60.0, words/total_seconds))
+                    with open(location + '/vocabulary.pkl', 'ab') as pkl:
+                        print('Writing data to pickle...')
+                        pickle.dump(sentences, pkl)
 
 #download_files(DOWNLOAD_FILES, URL, DATA_LOCATION)
 #parse_xml(DATA_LOCATION)
