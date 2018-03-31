@@ -1,6 +1,7 @@
 # Imports
 import os
 import urllib.request
+import requests
 import tarfile
 import bz2
 from xml.dom import minidom
@@ -59,11 +60,22 @@ def download(file, url, location):
     if not os.path.exists(location + "/" + file):
         print("Downloading " + file + "...")
         start_time = dt.datetime.now()
-        file, _ = urllib.request.urlretrieve(url + file, location + "/" + file)
+        #file, _ = urllib.request.urlretrieve(url + file, location + "/" + file)
+        file = download_file(url + file, location + '/' + file)
         end_time = dt.datetime.now()
         print("Downloading {0} took {1} minutes to run.".format(file, (end_time-start_time).total_seconds() / 60.0))
 
     return file
+
+def download_file(url, local_filename):
+    # NOTE the stream=True parameter
+    r = requests.get(url, stream=True)
+    with open(local_filename, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=1024): 
+            if chunk: # filter out keep-alive new chunks
+                f.write(chunk)
+                #f.flush() commented by recommendation from J.F.Sebastian
+    return local_filename
 
 def extract_files(location, file):
     for file in os.listdir(location):
@@ -172,7 +184,13 @@ def hacky_hack(location):
             if file.endswith(".xml"):
                 with open(subdir + "/" + file, buffering=200000) as xml_file:
                     print("Processing: " + subdir + "/" + file)
-                    tree = ET.fromstring(re.sub(r"(<\?xml[^>]+\?>)", r"\1<root>", xml_file) + "</root>")
+                    #tree = ET.fromstring(re.sub(r"(<\?xml[^>]+\?>)", r"\1<root>", xml_file) + "</root>")
+                    context = ET.iterparse(xml_file, events=('start','end'))
+                    context = iter(context)
+                    event, root = next(context)
+                    for event, element in context:
+                        if event == 'end' and element.tag == 'w':
+                            print(element.text)
 
 #download_files(DOWNLOAD_FILES, URL, DATA_LOCATION)
 #parse_xml(DATA_LOCATION)
