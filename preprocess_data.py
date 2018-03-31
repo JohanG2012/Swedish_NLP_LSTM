@@ -8,6 +8,7 @@ from xml import sax
 import re
 import pickle
 import datetime as dt
+import xml.etree.cElementTree as ET
 
 # Contants
 DATA_LOCATION = "./data"
@@ -165,6 +166,15 @@ def parse_xml(location):
     end_time = dt.datetime.now()
     print("Reading data took {} minutes to run.".format((end_time-start_time).total_seconds() / 60.0))
 
-download_files(DOWNLOAD_FILES, URL, DATA_LOCATION)
+def hacky_hack(location):
+    for subdir, dirs, files in os.walk(location):
+        for file in files:
+            if file.endswith(".xml"):
+                with open(subdir + "/" + file, buffering=200000) as xml_file:
+                    print("Processing: " + subdir + "/" + file)
+                    tree = ET.fromstring(re.sub(r"(<\?xml[^>]+\?>)", r"\1<root>", xml_file) + "</root>")
+
+#download_files(DOWNLOAD_FILES, URL, DATA_LOCATION)
 #parse_xml(DATA_LOCATION)
 #parse_to_plaintext(DATA_LOCATION)
+hacky_hack(DATA_LOCATION)
