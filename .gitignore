@@ -12,6 +12,7 @@ build/
 data/*.tar
 data/*.2bz
 data/*.xml
+data/*.txt
 develop-eggs/
 dist/
 downloads/
