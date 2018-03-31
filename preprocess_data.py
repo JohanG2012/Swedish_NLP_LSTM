@@ -10,7 +10,7 @@ import pickle
 import datetime as dt
 
 # Contants
-DATA_LOCATION = "./data/"
+DATA_LOCATION = "./data"
 URL = "http://spraakbanken.gu.se/lb/resurser/meningsmangder/"
 DATA_1950 = "gigaword-1950-59.tar"
 DATA_1960 = "gigaword-1960-69.tar"
@@ -50,15 +50,15 @@ WN_2013 = "webbnyheter2013.xml.bz2"
 FILES = [DATA_1950, DATA_1960, DATA_1970, DATA_1980, DATA_1990, DATA_2000, DATA_2010]
 WN_FILES = [WN_2001, WN_2002, WN_2003, WN_2004, WN_2005, WN_2006, WN_2007, WN_2008, WN_2009, WN_2010, WN_2011, WN_2012, WN_2013]
 GP_FILES = [GP_1994, GP_2001, GP_2002, GP_2003, GP_2004, GP_2005, GP_2006, GP_2007, GP_2008, GP_2009, GP_2010, GP_2011, GP_2012, GP_2013, GP_2D]
-#FILES = [DATA_1950]
+DOWNLOAD_FILES = GP_FILES + WN_FILES
 
 def download(file, url, location):
 
     # Get file if it does not exist
-    if not os.path.exists(location + file):
+    if not os.path.exists(location + "/" + file):
         print("Downloading " + file + "...")
         start_time = dt.datetime.now()
-        file, _ = urllib.request.urlretrieve(url + file, location + file)
+        file, _ = urllib.request.urlretrieve(url + file, location + "/" + file)
         end_time = dt.datetime.now()
         print("Downloading {0} took {1} minutes to run.".format(file, (end_time-start_time).total_seconds() / 60.0))
 
@@ -168,6 +168,6 @@ def parse_xml(location):
     end_time = dt.datetime.now()
     print("Reading data took {} minutes to run.".format((end_time-start_time).total_seconds() / 60.0))
 
-#download_files(FILES, URL, DATA_LOCATION)
+download_files(DOWNLOAD_FILES, URL, DATA_LOCATION)
 #parse_xml(DATA_LOCATION)
-parse_to_plaintext(DATA_LOCATION)
+#parse_to_plaintext(DATA_LOCATION)
