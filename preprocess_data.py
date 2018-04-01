@@ -179,6 +179,8 @@ def parse_xml(location):
     print("Reading data took {} minutes to run.".format((end_time-start_time).total_seconds() / 60.0))
 
 def hacky_hack(location):
+    words = 0
+    log_every = 100000
     start_time = dt.datetime.now()
     for subdir, dirs, files in os.walk(location):
         for file in files:
@@ -186,7 +188,6 @@ def hacky_hack(location):
                 with open(subdir + "/" + file, buffering=200000) as xml_file:
                     sentences = ''
                     named_entities = []
-                    words = 0
                     print("Processing: " + subdir + "/" + file)
                     #tree = ET.fromstring(re.sub(r"(<\?xml[^>]+\?>)", r"\1<root>", xml_file) + "</root>")
                     context = ET.iterparse(xml_file, events=('start','end'))
@@ -196,10 +197,14 @@ def hacky_hack(location):
                         if event == 'end' and element.tag == 'ne' and element.attrib['ex'] == 'ENAMEX':
                             named_entities.append(element.attrib['name'])
                         elif event == 'end' and element.tag == 'w':
-                            sentences += str(element.text + ' ')
-                            element.clear()
-                            root.clear()
-                            words += 1
+                            if isinstance(element.text, str):
+                                sentences += str(element.text + ' ')
+                                element.clear()
+                                root.clear()
+                                words += 1
+                                if words == log_every:
+                                    print("{0} words has been added to the vocabulary. {1}% of 100%".format(words, round((words / 1000000000) * 100, 3)))
+                                    log_every += 100000
                         elif event == 'end' and element.tag == 'sentence':
                             sentences += '\n'
                             element.clear()
