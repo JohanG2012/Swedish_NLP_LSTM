@@ -71,7 +71,7 @@ def download_file(url, local_filename):
     # NOTE the stream=True parameter
     r = requests.get(url, stream=True)
     with open(local_filename, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024): 
+        for chunk in r.iter_content(chunk_size=1024):
             if chunk: # filter out keep-alive new chunks
                 f.write(chunk)
                 #f.flush() commented by recommendation from J.F.Sebastian
@@ -179,13 +179,13 @@ def parse_xml(location):
     print("Reading data took {} minutes to run.".format((end_time-start_time).total_seconds() / 60.0))
 
 def hacky_hack(location):
+    start_time = dt.datetime.now()
     for subdir, dirs, files in os.walk(location):
         for file in files:
             if file.endswith(".xml"):
                 with open(subdir + "/" + file, buffering=200000) as xml_file:
                     sentences = ''
                     words = 0
-                    start_time = dt.datetime.now()
                     print("Processing: " + subdir + "/" + file)
                     #tree = ET.fromstring(re.sub(r"(<\?xml[^>]+\?>)", r"\1<root>", xml_file) + "</root>")
                     context = ET.iterparse(xml_file, events=('start','end'))
@@ -202,12 +202,12 @@ def hacky_hack(location):
                             sentences += '\n'
                             element.clear()
                             root.clear()
-                    end_time = dt.datetime.now()
-                    total_seconds = (end_time-start_time).total_seconds()
-                    print("Reading {} words took {} minutes to run. ({} words / second)".format(words, total_seconds / 60.0, words/total_seconds))
                     with open(location + '/vocabulary.pkl', 'ab') as pkl:
                         print('Writing data to pickle...')
                         pickle.dump(sentences, pkl)
+    end_time = dt.datetime.now()
+    total_seconds = (end_time-start_time).total_seconds()
+    print("Reading {} words took {} minutes to run. ({} words / second)".format(words, total_seconds / 60.0, words/total_seconds))
 
 #download_files(DOWNLOAD_FILES, URL, DATA_LOCATION)
 #parse_xml(DATA_LOCATION)
