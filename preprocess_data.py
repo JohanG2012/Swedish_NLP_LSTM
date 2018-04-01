@@ -203,7 +203,7 @@ def hacky_hack(location):
                                 root.clear()
                                 words += 1
                                 if words == log_every:
-                                    print("{0} words has been added to the vocabulary. {1}% of 100%".format(words, round((words / 1000000000) * 100, 3)))
+                                    print("{0} words has been added to the vocabulary. {1}% of 100%".format(words, round((words / 543800000) * 100, 3)))
                                     log_every += 100000
                         elif event == 'end' and element.tag == 'sentence':
                             sentences += '\n'
