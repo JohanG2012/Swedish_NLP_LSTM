@@ -263,11 +263,10 @@ def preprocess_sentences(location):
        dump_num = 0
        for event in pickleLoader(f):
            dump_num += 1
-           if dump_num == 1:
-               print("Loading dump {0}...".format(dump_num))
-               for line in event.splitlines():
-                   line = clean_text(line)
-                   sentence_list.append(line)
+           print("Loading dump {0}...".format(dump_num))
+           for line in event.splitlines():
+               line = clean_text(line)
+               sentence_list.append(line)
     print("Example sentence: " + sentence_list[0][:500])
 
     print("Converting Vocabulary to integers...")
@@ -329,4 +328,4 @@ def preprocess_sentences(location):
 #old_parse_xml(DATA_LOCATION)
 #parse_to_plaintext(DATA_LOCATION)
 #parse_xml(DATA_LOCATION)
-preprocess_sentences(DATA_LOCATION)
+#preprocess_sentences(DATA_LOCATION)
