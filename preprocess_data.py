@@ -263,10 +263,11 @@ def preprocess_sentences(location):
        dump_num = 0
        for event in pickleLoader(f):
            dump_num += 1
-           print("Loading dump {0}...".format(dump_num))
-           for line in event.splitlines():
-               line = clean_text(line)
-               sentence_list.append(line)
+           if dump_num == 1:
+               print("Loading dump {0}...".format(dump_num))
+               for line in event.splitlines():
+                   line = clean_text(line)
+                   sentence_list.append(line)
     print("Example sentence: " + sentence_list[0][:500])
 
     print("Converting Vocabulary to integers...")
@@ -306,24 +307,22 @@ def preprocess_sentences(location):
         lengths.append(len(sentence))
     lengths = pd.DataFrame(lengths, columns=["counts"])
 
-    lengths.describe()
-
     for sentence in int_sentences:
         if len(sentence) <= max_length and len(sentence) >= min_length:
             good_sentences.append(sentence)
 
     print("We will use {} sentences to train and test our model.".format(len(good_sentences)))
     with open(location + '/vocab_to_int.pkl', 'wb') as pkl:
-        print('Writing sentence list to pickle...')
+        print('Writing vocab_to_int to pickle...')
         pickle.dump(vocab_to_int, pkl)
     with open(location + '/int_to_vocab.pkl', 'wb') as pkl:
-        print('Writing sentence list to pickle...')
+        print('Writing int_to_voac to pickle...')
         pickle.dump(int_to_vocab, pkl)
     with open(location + '/good_sentences.pkl', 'wb') as pkl:
-        print('Writing sentence list to pickle...')
+        print('Writing good sentences list to pickle...')
         pickle.dump(good_sentences, pkl)
     with open(location + '/int_sentences.pkl', 'wb') as pkl:
-        print('Writing sentence list to pickle...')
+        print('Writing int_sentence to pickle...')
         pickle.dump(int_sentences, pkl)
 
 #download_files(DOWNLOAD_FILES, URL, DATA_LOCATION)
