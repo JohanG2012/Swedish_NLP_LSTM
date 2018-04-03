@@ -10,6 +10,7 @@ import re
 import pickle
 import datetime as dt
 import xml.etree.cElementTree as ET
+import pandas as pd
 
 # Contants
 DATA_LOCATION = "./data"
@@ -144,7 +145,7 @@ def parse_to_plaintext(location):
                 os.remove(subdir + '/' + file)
                 print("Reading words took {} minutes to run.".format((end_time-start_time).total_seconds() / 60.0))
 
-def parse_xml(location):
+def old_parse_xml(location):
     print("Parsing XML to vocabulary pickle...")
     print("Parsing one billion words, this might take some time...")
     data = list()
@@ -178,7 +179,7 @@ def parse_xml(location):
     end_time = dt.datetime.now()
     print("Reading data took {} minutes to run.".format((end_time-start_time).total_seconds() / 60.0))
 
-def hacky_hack(location):
+def parse_xml(location):
     words = 0
     log_every = 100000
     start_time = dt.datetime.now()
@@ -220,7 +221,113 @@ def hacky_hack(location):
     total_seconds = (end_time-start_time).total_seconds()
     print("Reading {} words took {} minutes to run. ({} words / second)".format(words, total_seconds / 60.0, words/total_seconds))
 
+def pickleLoader(pklFile):
+   try:
+       while True:
+           yield pickle.load(pklFile)
+   except EOFError:
+       pass
+
+def clean_text(text):
+    '''Remove unwanted characters and extra spaces from the text'''
+    text = re.sub(r'\n', ' ', text)
+    text = re.sub(r'[{}@_*<>()\\#%+=\[\]]','', text)
+    text = re.sub('a0','', text)
+    text = re.sub('\'92t','\'t', text)
+    text = re.sub('\'92s','\'s', text)
+    text = re.sub('\'92m','\'m', text)
+    text = re.sub('\'92ll','\'ll', text)
+    text = re.sub('\'91','', text)
+    text = re.sub('\'92','', text)
+    text = re.sub('\'93','', text)
+    text = re.sub('\'94','', text)
+    text = re.sub('\.','. ', text)
+    text = re.sub('\!','! ', text)
+    text = re.sub('\?','? ', text)
+    text = re.sub(' +',' ', text)
+    return text
+
+def preprocess_sentences(location):
+    codes = ['<PAD>','<EOS>','<GO>']
+    vocab_to_int = {}
+    int_to_vocab = {}
+    int_sentences = []
+    count = 0
+    sentence_list = []
+    lengths = []
+    max_length = 92
+    min_length = 10
+    good_sentences = []
+    print(location + "/" + "vocabulary.pkl")
+    with open(location + "/" + "vocabulary.pkl", "rb", 20000) as f:
+       dump_num = 0
+       for event in pickleLoader(f):
+           dump_num += 1
+           print("Loading dump {0}...".format(dump_num))
+           for line in event.splitlines():
+               line = clean_text(line)
+               sentence_list.append(line)
+    print("Example sentence: " + sentence_list[0][:500])
+
+    print("Converting Vocabulary to integers...")
+    for sentence in sentence_list:
+        for character in sentence:
+            if character not in vocab_to_int:
+                vocab_to_int[character] = count
+                count += 1
+
+    print("Adding codes/tokens...")
+    for code in codes:
+        vocab_to_int[code] = count
+        count += 1
+
+    vocab_size = len(vocab_to_int)
+    print("The vocabulary contains {} characters.".format(vocab_size))
+    print("Vocabulary contains: " + "".join(sorted(vocab_to_int)))
+
+    for character, value in vocab_to_int.items():
+        int_to_vocab[value] = character
+
+    print("Creating lookup table from int to char...")
+    iterator = iter(sentence_list)
+    for sentence in iterator:
+        int_sentence = []
+        for character in sentence:
+            int_sentence.append(vocab_to_int[character])
+            int_sentences.append(int_sentence)
+
+    with open(location + '/sentence_list.pkl', 'wb') as pkl:
+        print('Writing sentence list to pickle...')
+        pickle.dump(sentence_list, pkl)
+    sentence_list[:] = []
+
+    print("Converting sentences to integers...")
+    for sentence in int_sentences:
+        lengths.append(len(sentence))
+    lengths = pd.DataFrame(lengths, columns=["counts"])
+
+    lengths.describe()
+
+    for sentence in int_sentences:
+        if len(sentence) <= max_length and len(sentence) >= min_length:
+            good_sentences.append(sentence)
+
+    print("We will use {} sentences to train and test our model.".format(len(good_sentences)))
+    with open(location + '/vocab_to_int.pkl', 'wb') as pkl:
+        print('Writing sentence list to pickle...')
+        pickle.dump(vocab_to_int, pkl)
+    with open(location + '/int_to_vocab.pkl', 'wb') as pkl:
+        print('Writing sentence list to pickle...')
+        pickle.dump(int_to_vocab, pkl)
+    with open(location + '/good_sentences.pkl', 'wb') as pkl:
+        print('Writing sentence list to pickle...')
+        pickle.dump(good_sentences, pkl)
+    with open(location + '/int_sentences.pkl', 'wb') as pkl:
+        print('Writing sentence list to pickle...')
+        pickle.dump(int_sentences, pkl)
+
 #download_files(DOWNLOAD_FILES, URL, DATA_LOCATION)
-#parse_xml(DATA_LOCATION)
+#old_parse_xml(DATA_LOCATION)
 #parse_to_plaintext(DATA_LOCATION)
-hacky_hack(DATA_LOCATION)
+#parse_xml(DATA_LOCATION)
+preprocess_sentences(DATA_LOCATION)
