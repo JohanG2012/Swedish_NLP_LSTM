@@ -11,6 +11,9 @@ import pickle
 import datetime as dt
 import xml.etree.cElementTree as ET
 import pandas as pd
+from sklearn.model_selection import train_test_split
+import numpy as np
+
 
 # Contants
 DATA_LOCATION = "./data"
@@ -229,7 +232,6 @@ def pickleLoader(pklFile):
        pass
 
 def clean_text(text):
-    '''Remove unwanted characters and extra spaces from the text'''
     text = re.sub(r'\n', ' ', text)
     text = re.sub(r'[{}@_*<>()\\#%+=\[\]]','', text)
     text = re.sub('a0','', text)
@@ -263,15 +265,18 @@ def preprocess_sentences(location):
        dump_num = 0
        for event in pickleLoader(f):
            dump_num += 1
-           print("Loading dump {0}...".format(dump_num))
-           for line in event.splitlines():
-               line = clean_text(line)
-               sentence_list.append(line)
+           if dump_num <= 30:
+               print("Loading dump {0}...".format(dump_num))
+               for line in event.splitlines():
+                   line = clean_text(line)
+                   sentence_list.append(line)
     print("Example sentence: " + sentence_list[0][:500])
 
     print("Converting Vocabulary to integers...")
-    for sentence in sentence_list:
-        for character in sentence:
+    iterator = iter(sentence_list)
+    for sentence in iterator:
+        charIterator = iter(sentence)
+        for character in charIterator:
             if character not in vocab_to_int:
                 vocab_to_int[character] = count
                 count += 1
@@ -290,11 +295,18 @@ def preprocess_sentences(location):
 
     print("Creating lookup table from int to char...")
     iterator = iter(sentence_list)
+    num_sent = 0
+    log_every = 1000000
     for sentence in iterator:
         int_sentence = []
-        for character in sentence:
+        chariterator = iter(sentence)
+        for character in chariterator:
             int_sentence.append(vocab_to_int[character])
-            int_sentences.append(int_sentence)
+        int_sentences.append(int_sentence)
+        num_sent += 1
+        if log_every == num_sent:
+            log_every += 1000000
+            print("Transforming characters to int. {0}% of 100%".format(round((num_sent / len(sentence_list)) * 100, 3)))
 
     with open(location + '/sentence_list.pkl', 'wb') as pkl:
         print('Writing sentence list to pickle...')
@@ -324,8 +336,79 @@ def preprocess_sentences(location):
         print('Writing int_sentence to pickle...')
         pickle.dump(int_sentences, pkl)
 
+def noise_maker(sentence, threshold):
+    vocab_to_int = pickle.load(open("./data/vocab_to_int.pkl", "rb"))
+    letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m',
+           'n','o','p','q','r','s','t','u','v','w','x','y','z','å', 'ä', 'ö']
+    noisy_sentence = []
+    i = 0
+    while i < len(sentence):
+        random = np.random.uniform(0,1,1)
+        # Most characters will be correct since the threshold value is high
+        if random < threshold:
+            noisy_sentence.append(sentence[i])
+        else:
+            new_random = np.random.uniform(0,1,1)
+            # ~33% chance characters will swap locations
+            if new_random > 0.67:
+                if i == (len(sentence) - 1):
+                    # If last character in sentence, it will not be typed
+                    continue
+                else:
+                    # if any other character, swap order with following character
+                    noisy_sentence.append(sentence[i+1])
+                    noisy_sentence.append(sentence[i])
+                    i += 1
+            # ~33% chance an extra lower case letter will be added to the sentence
+            elif new_random < 0.33:
+                random_letter = np.random.choice(letters, 1)[0]
+                noisy_sentence.append(vocab_to_int[random_letter])
+                noisy_sentence.append(sentence[i])
+            # ~33% chance a character will not be typed
+            else:
+                pass
+        i += 1
+    return noisy_sentence
+
+def create_trainingsets(location):
+    training_sorted = []
+    testing_sorted = []
+    max_length = 92
+    min_length = 10
+    good_sentences = pickle.load(open(location + "/good_sentences.pkl", "rb"))
+    training, testing = train_test_split(good_sentences, test_size = 0.15, random_state = 2)
+
+    for i in range(min_length, max_length+1):
+        for sentence in training:
+            if len(sentence) == i:
+                training_sorted.append(sentence)
+        for sentence in testing:
+            if len(sentence) == i:
+                testing_sorted.append(sentence)
+
+    for i in range(5):
+        print(training_sorted[i], len(training_sorted[i]))
+
+    letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m',
+           'n','o','p','q','r','s','t','u','v','w','x','y','z',]
+
+    threshold = 0.9
+    for sentence in training_sorted[:5]:
+        print("Sentence: ")
+        print(sentence)
+        print("With Noise: ")
+        print(noise_maker(sentence, threshold))
+        print()
+    with open(location + '/training_sorted.pkl', 'wb') as pkl:
+        print('Writing training_sorted to pickle...')
+        pickle.dump(training_sorted, pkl)
+    with open(location + '/testing_sorted.pkl', 'wb') as pkl:
+        print('Writing testing_sorted to pickle...')
+        pickle.dump(testing_sorted, pkl)
+
 #download_files(DOWNLOAD_FILES, URL, DATA_LOCATION)
 #old_parse_xml(DATA_LOCATION)
 #parse_to_plaintext(DATA_LOCATION)
 #parse_xml(DATA_LOCATION)
 #preprocess_sentences(DATA_LOCATION)
+create_trainingsets(DATA_LOCATION)
