@@ -247,7 +247,7 @@ def clean_text(text):
     text = re.sub('\!','! ', text)
     text = re.sub('\?','? ', text)
     text = re.sub(' +',' ', text)
-    return text
+    return text.lower()
 
 def preprocess_sentences(location):
     codes = ['<PAD>','<EOS>','<GO>']
@@ -265,7 +265,7 @@ def preprocess_sentences(location):
        dump_num = 0
        for event in pickleLoader(f):
            dump_num += 1
-           if dump_num <= 30:
+           if dump_num <= 1:
                print("Loading dump {0}...".format(dump_num))
                for line in event.splitlines():
                    line = clean_text(line)
@@ -373,8 +373,9 @@ def noise_maker(sentence, threshold):
 def create_trainingsets(location):
     training_sorted = []
     testing_sorted = []
+    int_to_vocab = pickle.load( open( "./data/int_to_vocab.pkl", "rb" ) )
     max_length = 92
-    min_length = 10
+    min_length = 50
     good_sentences = pickle.load(open(location + "/good_sentences.pkl", "rb"))
     training, testing = train_test_split(good_sentences, test_size = 0.15, random_state = 2)
 
@@ -389,15 +390,12 @@ def create_trainingsets(location):
     for i in range(5):
         print(training_sorted[i], len(training_sorted[i]))
 
-    letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m',
-           'n','o','p','q','r','s','t','u','v','w','x','y','z',]
-
     threshold = 0.9
     for sentence in training_sorted[:5]:
         print("Sentence: ")
-        print(sentence)
+        print("".join([int_to_vocab[i] for i in sentence]))
         print("With Noise: ")
-        print(noise_maker(sentence, threshold))
+        print("".join([int_to_vocab[i] for i in noise_maker(sentence, threshold)]))
         print()
     with open(location + '/training_sorted.pkl', 'wb') as pkl:
         print('Writing training_sorted to pickle...')
@@ -405,6 +403,9 @@ def create_trainingsets(location):
     with open(location + '/testing_sorted.pkl', 'wb') as pkl:
         print('Writing testing_sorted to pickle...')
         pickle.dump(testing_sorted, pkl)
+
+    print("Trainingset: {0} sentences".format(len(training_sorted)))
+    print("Testingset: {0} sentences".format(len(testing_sorted)))
 
 #download_files(DOWNLOAD_FILES, URL, DATA_LOCATION)
 #old_parse_xml(DATA_LOCATION)
