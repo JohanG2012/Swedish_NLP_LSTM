@@ -166,14 +166,15 @@ def preprocess_sentences(location = DATA_LOCATION):
     good_sentences = []
     print(location + "/" + "vocabulary.pkl")
     with open(location + "/" + "vocabulary.pkl", "rb", 20000) as f:
-       dump_num = 0
-       for event in pickleLoader(f):
-           dump_num += 1
-           if dump_num <= 1:
-               print("Loading dump {0}...".format(dump_num))
-               for line in event.splitlines():
-                   line = clean_text(line)
-                   sentence_list.append(line)
+        dump_num = 0
+        for event in pickleLoader(f):
+            dump_num += 1
+            print("Loading dump {0}...".format(dump_num))
+            for line in event.splitlines():
+                line = clean_text(line)
+                sentence_list.append(line)
+            if dump_num >= 2:
+                break
     print("Example sentence: " + sentence_list[0][:500])
 
     counter = Counter()
