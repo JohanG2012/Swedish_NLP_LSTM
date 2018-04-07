@@ -10,9 +10,10 @@ training_sorted = pickle.load( open( "./data/training_mini.pkl", "rb" ) )
 testing_sorted = pickle.load( open( "./data/testing_mini.pkl", "rb" ) )
 #testing_sorted = pickle.load( open( "./data/testing_sorted.pkl", "rb" ) )
 vocab_to_int = pickle.load( open( "./data/vocab_to_int.pkl", "rb" ) )
+int_to_vocab = pickle.load( open( "./data/int_to_vocab.pkl", "rb" ) )
 
 # Training parameters
-epochs = 1
+epochs = 10
 batch_size = 128
 num_layers = 2
 rnn_size = 512
@@ -137,6 +138,19 @@ def train(model, epochs):
                     # Print result
                     print('Testing Loss: {:>6.3f}, Seconds: {:>4.2f}'
                           .format(batch_loss_testing / n_batches_testing, batch_time_testing))
+
+                    for i in range(10):
+                        text = testing_sorted[i]
+                        answer_logits = sess.run(model.predictions, {model.inputs: [text]*batch_size,
+                                                                 model.inputs_length: [len(text)]*batch_size,
+                                                                 model.targets_length: [len(text)+1],
+                                                                 model.keep_prob: [1.0]})[0]
+
+                        # Remove <PAD> from output
+                        pad = vocab_to_int["<PAD>"]
+
+                        print('  Validation Input: {}'.format("".join([int_to_vocab[i] for i in text])))
+                        print('  Validation Output: {}'.format("".join([int_to_vocab[i] for i in answer_logits if i != pad])))
 
                     # Reset
                     batch_time_testing = 0
