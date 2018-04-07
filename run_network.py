@@ -2,6 +2,8 @@ from download_data import download_files
 from create_training_sets import create_trainingsets
 from use_lstm_model import use_lstm_model
 from train_lstm_model import train_lstm_model
+from preporcess_data import parse_xml
+from preporcess_data import preprocess_sentences
 
 if __name__ == "__main__":
     #download_files()
