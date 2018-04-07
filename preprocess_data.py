@@ -7,6 +7,7 @@ from xml import sax
 import re
 import xml.etree.cElementTree as ET
 import pandas as pd
+from collections import Counter
 import random
 from noise_maker import noise_maker
 import datetime as dt
@@ -18,7 +19,13 @@ DATA_LOCATION = './data'
 
 data = ''
 
-CLEAN_PATTERN = re.compile(r'[^a-zA-ZåäöÅÄÖéÉ!?\.,:;\-\'\"0-9 ]', re.UNICODE)
+WHITESPACE_FILTER = re.compile(r'[^\S\n]+', re.UNICODE)
+DASH_FILTER = re.compile(r'[\-\˗\֊\‐\‑\‒\–\—\⁻\₋\−\﹣\－]', re.UNICODE)
+QUOTE_FILTER = re.compile(r'&#39;|[ʼ՚＇‘’‛❛❜ߴߵ`‵´ˊˋ{}{}{}{}{}{}{}{}{}]'.format(chr(768), chr(769), chr(832), chr(833), chr(2387), chr(5151), chr(5152), chr(65344), chr(8242)), re.UNICODE)
+LEFT_BRACKET_FILTER = re.compile(r'[\(\[\{\⁽\₍\❨\❪\﹙\（]', re.UNICODE)
+RIGHT_BRACKET_FILTER = re.compile(r'[\)\]\}\⁾\₎\❩\❫\﹚\）]', re.UNICODE)
+ALLOWED_SPECIAL_CHARS = """-!?/;"'%&<>.()[]{}@#:,|=*"""
+CLEANER = re.compile(r'[^\w\s{}]'.format(re.escape(ALLOWED_SPECIAL_CHARS)), re.UNICODE)
 
 def parse_to_plaintext(location):
     start_time = dt.datetime.now()
@@ -138,24 +145,12 @@ def pickleLoader(pklFile):
        pass
 
 def clean_text(text):
-    '''
-    text = re.sub(r'\n', ' ', text)
-    text = re.sub(r'[{}@_*<>()\\#%+=\[\]]','', text)
-    text = re.sub('a0','', text)
-    text = re.sub('\'92t','\'t', text)
-    text = re.sub('\'92s','\'s', text)
-    text = re.sub('\'92m','\'m', text)
-    text = re.sub('\'92ll','\'ll', text)
-    text = re.sub('\'91','', text)
-    text = re.sub('\'92','', text)
-    text = re.sub('\'93','', text)
-    text = re.sub('\'94','', text)
-    text = re.sub('\.','. ', text)
-    text = re.sub('\!','! ', text)
-    text = re.sub('\?','? ', text)
-    text = re.sub(' +',' ', text)
-    '''
-    text = re.sub(CLEAN_PATTERN, '', text)
+    text = WHITESPACE_FILTER.sub(' ', text.strip()) # Replace different kind of whitespace with "normal" whitespace.
+    text = DASH_FILTER.sub('-', text) # Replace different kind of dashes with a noram ("-") dash.
+    text = QUOTE_FILTER.sub("'", text) # Replace different kind of quotes, with single quote.
+    text = LEFT_BRACKET_FILTER.sub("(", text) # Replace all kinds of brackets with parentacis
+    text = RIGHT_BRACKET_FILTER.sub(")", text) # Replace all kinds of brackets with parentacis
+    text = CLEANER.sub('', text) # Basic cleanup
     return text.lower()
 
 def preprocess_sentences(location = DATA_LOCATION):
@@ -174,12 +169,19 @@ def preprocess_sentences(location = DATA_LOCATION):
        dump_num = 0
        for event in pickleLoader(f):
            dump_num += 1
-           if dump_num <= 30:
+           if dump_num <= 1:
                print("Loading dump {0}...".format(dump_num))
                for line in event.splitlines():
                    line = clean_text(line)
                    sentence_list.append(line)
     print("Example sentence: " + sentence_list[0][:500])
+
+    counter = Counter()
+    print("Reading characters:")
+    for line in sentence_list:
+        counter.update(line)
+    top_chars = {key for key, _value in counter.most_common(56)}
+
 
     print("Converting Vocabulary to integers...")
     iterator = iter(sentence_list)
@@ -198,7 +200,6 @@ def preprocess_sentences(location = DATA_LOCATION):
     vocab_size = len(vocab_to_int)
     print("The vocabulary contains {} characters.".format(vocab_size))
     print("Vocabulary contains: " + "".join(sorted(vocab_to_int)))
-
     for character, value in vocab_to_int.items():
         int_to_vocab[value] = character
 
@@ -217,10 +218,16 @@ def preprocess_sentences(location = DATA_LOCATION):
             log_every += 1000000
             print("Transforming characters to int. {0}% of 100%".format(round((num_sent / len(sentence_list)) * 100, 3)))
 
+    new_sentence_list = []
+    for sent in sentence_list:
+        if not bool(set(sent) - set(sorted(vocab_to_int))):
+            new_sentence_list.append(sent)
+    sentence_list[:] = []
+
     with open(location + '/sentence_list.pkl', 'wb') as pkl:
         print('Writing sentence list to pickle...')
-        pickle.dump(sentence_list, pkl)
-    sentence_list[:] = []
+        pickle.dump(new_sentence_list, pkl)
+    new_sentence_list[:] = []
 
     print("Converting sentences to integers...")
     for sentence in int_sentences:
@@ -248,8 +255,8 @@ def preprocess_sentences(location = DATA_LOCATION):
 
 
 
-
-#old_parse_xml(DATA_LOCATION)
-#parse_to_plaintext(DATA_LOCATION)
-#parse_xml(DATA_LOCATION)
-preprocess_sentences(DATA_LOCATION)
+if __name__ == "__main__":
+    #old_parse_xml(DATA_LOCATION)
+    #parse_to_plaintext(DATA_LOCATION)
+    #parse_xml(DATA_LOCATION)
+    preprocess_sentences(DATA_LOCATION)
