@@ -140,7 +140,7 @@ def train(model, epochs):
                           .format(batch_loss_testing / n_batches_testing, batch_time_testing))
 
                     for i in range(10):
-                        text = noise_maker(testing_sorted[i])
+                        text = noise_maker(testing_sorted[i], threshold)
                         answer_logits = sess.run(model.predictions, {model.inputs: [text]*batch_size,
                                                                  model.inputs_length: [len(text)]*batch_size,
                                                                  model.targets_length: [len(text)+1],
