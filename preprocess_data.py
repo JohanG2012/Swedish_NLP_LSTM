@@ -9,11 +9,16 @@ import xml.etree.cElementTree as ET
 import pandas as pd
 import random
 from noise_maker import noise_maker
+import datetime as dt
+import pickle
 
+import os
 
-
+DATA_LOCATION = './data'
 
 data = ''
+
+CLEAN_PATTERN = re.compile(r'[^a-zA-ZåäöÅÄÖéÉ!?\.,:;\-\'\"0-9 ]', re.UNICODE)
 
 def parse_to_plaintext(location):
     start_time = dt.datetime.now()
@@ -133,6 +138,7 @@ def pickleLoader(pklFile):
        pass
 
 def clean_text(text):
+    '''
     text = re.sub(r'\n', ' ', text)
     text = re.sub(r'[{}@_*<>()\\#%+=\[\]]','', text)
     text = re.sub('a0','', text)
@@ -148,6 +154,8 @@ def clean_text(text):
     text = re.sub('\!','! ', text)
     text = re.sub('\?','? ', text)
     text = re.sub(' +',' ', text)
+    '''
+    text = re.sub(CLEAN_PATTERN, '', text)
     return text.lower()
 
 def preprocess_sentences(location = DATA_LOCATION):
@@ -166,7 +174,7 @@ def preprocess_sentences(location = DATA_LOCATION):
        dump_num = 0
        for event in pickleLoader(f):
            dump_num += 1
-           if dump_num <= 1:
+           if dump_num <= 30:
                print("Loading dump {0}...".format(dump_num))
                for line in event.splitlines():
                    line = clean_text(line)
@@ -244,4 +252,4 @@ def preprocess_sentences(location = DATA_LOCATION):
 #old_parse_xml(DATA_LOCATION)
 #parse_to_plaintext(DATA_LOCATION)
 #parse_xml(DATA_LOCATION)
-#preprocess_sentences(DATA_LOCATION)
+preprocess_sentences(DATA_LOCATION)

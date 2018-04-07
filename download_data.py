@@ -82,12 +82,19 @@ def extract_files(location, file):
     for subdir, dirs, files in os.walk(location):
         for file in files:
             if file.endswith(".bz2") and not os.path.exists(location + file[:-4]):
+                print(file, files, os.path.join(subdir, file))
                 start_time = dt.datetime.now()
                 print("Extracting " + subdir + "/" + file + "...")
                 bz2file = bz2.BZ2File(os.path.join(subdir, file), 'rb')
-                data = bz2file.read()
+                #data = bz2file.read()
                 new_file = os.path.join(subdir, file)[:-4]
-                open(new_file, 'wb').write(data)
+                CHUNK = 128 * 1024 * 1024
+                with open(new_file, 'wb') as f:
+                    while True:
+                        chunk = bz2file.read(CHUNK)
+                        if not chunk:
+                            break
+                        f.write(chunk)
                 end_time = dt.datetime.now()
                 print("Extracting {0} took {1} minutes to run.".format(file, (end_time-start_time).total_seconds() / 60.0))
                 print("Removing " + subdir + "/" + file + "...")
