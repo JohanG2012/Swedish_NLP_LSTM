@@ -5,9 +5,12 @@ from noise_maker import noise_maker
 import numpy as np
 import time
 
-training_sorted = pickle.load( open( "./data/training_mini.pkl", "rb" ) )
+DATA_FOLDER = './data'
+CHECKPOINT_FOLDER = './checkpoints'
+
+training_sorted = pickle.load( open( "{}/training_mini.pkl".format(DATA_FOLDER), "rb" ) )
 #training_sorted = pickle.load( open( "./data/training_sorted.pkl", "rb" ) )
-testing_sorted = pickle.load( open( "./data/testing_mini.pkl", "rb" ) )
+testing_sorted = pickle.load( open( "{}/testing_mini.pkl".format(DATA_FOLDER), "rb" ) )
 #testing_sorted = pickle.load( open( "./data/testing_sorted.pkl", "rb" ) )
 vocab_to_int = pickle.load( open( "./data/vocab_to_int.pkl", "rb" ) )
 int_to_vocab = pickle.load( open( "./data/int_to_vocab.pkl", "rb" ) )
@@ -160,7 +163,7 @@ def train(model, epochs):
                     if batch_loss_testing <= min(testing_loss_summary):
                         print('Model is improved, Saving!')
                         stop_early = 0
-                        checkpoint = "./checkpoints/lstm.ckpt"
+                        checkpoint = "{}/lstm.ckpt".format(CHECKPOINT_FOLDER)
                         saver = tf.train.Saver()
                         saver.save(sess, checkpoint)
 

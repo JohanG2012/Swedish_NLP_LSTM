@@ -8,10 +8,12 @@ import numpy as np
 import time
 from preprocess_data import clean_text
 
-vocab_to_int = pickle.load( open( "./data/vocab_to_int.pkl", "rb" ) )
-int_to_vocab = pickle.load( open( "./data/int_to_vocab.pkl", "rb" ) )
-training_sorted = pickle.load( open( "./data/training_mini.pkl", "rb" ) )
-testing_sorted = pickle.load( open( "./data/testing_mini.pkl", "rb" ) )
+DATA_FOLDER = './data'
+
+vocab_to_int = pickle.load( open( "{}/vocab_to_int.pkl".format(DATA_FOLDER), "rb" ) )
+int_to_vocab = pickle.load( open( "{}/int_to_vocab.pkl".format(DATA_FOLDER), "rb" ) )
+training_sorted = pickle.load( open( "{}/training_mini.pkl".format(DATA_FOLDER), "rb" ) )
+testing_sorted = pickle.load( open( "{}/testing_mini.pkl".format(DATA_FOLDER), "rb" ) )
 
 # Model input pipes for data feed to the model
 '''
