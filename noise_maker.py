@@ -1,8 +1,10 @@
 import pickle
 import numpy as np
 
+DATA_FOLDER = '../data'
+
 def noise_maker(sentence, threshold):
-    vocab_to_int = pickle.load(open("./data/vocab_to_int.pkl", "rb"))
+    vocab_to_int = pickle.load(open("{}/vocab_to_int.pkl".format(DATA_FOLDER), "rb"))
     letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m',
            'n','o','p','q','r','s','t','u','v','w','x','y','z','å', 'ä', 'ö']
     noisy_sentence = []

@@ -1,19 +1,20 @@
 from lstm_model import build_graph
 import tensorflow as tf
 import pickle
-from noise_maker import noise_maker
 import numpy as np
 import time
 
-DATA_FOLDER = './data'
-CHECKPOINT_FOLDER = './checkpoints'
+DATA_FOLDER = '/data'
+CHECKPOINT_FOLDER = '/output'
 
 training_sorted = pickle.load( open( "{}/training_mini.pkl".format(DATA_FOLDER), "rb" ) )
+noisy_training_sorted = pickle.load(open("{}/noisy_training_mini.pkl".format(DATA_FOLDER), "rb"))
 #training_sorted = pickle.load( open( "./data/training_sorted.pkl", "rb" ) )
 testing_sorted = pickle.load( open( "{}/testing_mini.pkl".format(DATA_FOLDER), "rb" ) )
+noisy_testing_sorted = pickle.load(open("{}/noisy_testing_mini.pkl".format(DATA_FOLDER), "rb"))
 #testing_sorted = pickle.load( open( "./data/testing_sorted.pkl", "rb" ) )
-vocab_to_int = pickle.load( open( "./data/vocab_to_int.pkl", "rb" ) )
-int_to_vocab = pickle.load( open( "./data/int_to_vocab.pkl", "rb" ) )
+vocab_to_int = pickle.load( open( "{}/vocab_to_int.pkl".format(DATA_FOLDER), "rb" ) )
+int_to_vocab = pickle.load( open( "{}/int_to_vocab.pkl".format(DATA_FOLDER), "rb" ) )
 
 # Training parameters
 epochs = 10
@@ -35,7 +36,7 @@ def pad_sentence_batch(sentence_batch):
     max_sentence = max([len(sentence) for sentence in sentence_batch])
     return [sentence + [vocab_to_int['<PAD>']] * (max_sentence - len(sentence)) for sentence in sentence_batch]
 
-def get_batches(sentences, batch_size, threshold):
+def get_batches(sentences, noisy_sentences, batch_size):
 
     # For each batch
     for batch_i in range(0, len(sentences)//batch_size):
@@ -43,9 +44,7 @@ def get_batches(sentences, batch_size, threshold):
         sentences_batch = sentences[start_i:start_i + batch_size]
 
         # Create noisy batch
-        sentences_batch_noisy = []
-        for sentence in sentences_batch:
-            sentences_batch_noisy.append(noise_maker(sentence, threshold))
+        sentences_batch_noisy = noisy_sentences[start_i:start_i + batch_size]
 
         # Add EOS tokens
         sentences_batch_eos = []
@@ -91,7 +90,7 @@ def train(model, epochs):
             batch_time = 0
 
             # Per batch
-            for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(training_sorted, batch_size, threshold)):
+            for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(training_sorted, noisy_training_sorted, batch_size)):
                 start_time = time.time()
                 summary, loss, _ = sess.run([model.merged, model.cost, model.train_op],
                                              {model.inputs: input_batch,
@@ -123,7 +122,7 @@ def train(model, epochs):
                 if batch_i % testing_check == 0 and batch_i > 0:
                     batch_loss_testing = 0
                     batch_time_testing = 0
-                    for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(testing_sorted, batch_size, threshold)):
+                    for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(testing_sorted, noisy_testing_sorted, batch_size)):
                         start_time_testing = time.time()
                         summary, loss = sess.run([model.merged, model.cost],
                                                      {model.inputs: input_batch,
@@ -143,7 +142,7 @@ def train(model, epochs):
                           .format(batch_loss_testing / n_batches_testing, batch_time_testing))
 
                     for i in range(10):
-                        text = noise_maker(testing_sorted[i], threshold)
+                        text = noisy_testing_sorted[i]
                         answer_logits = sess.run(model.predictions, {model.inputs: [text]*batch_size,
                                                                  model.inputs_length: [len(text)]*batch_size,
                                                                  model.targets_length: [len(text)+1],

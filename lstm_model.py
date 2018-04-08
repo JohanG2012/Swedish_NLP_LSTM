@@ -8,7 +8,7 @@ import numpy as np
 import time
 from preprocess_data import clean_text
 
-DATA_FOLDER = './data'
+DATA_FOLDER = '/data'
 
 vocab_to_int = pickle.load( open( "{}/vocab_to_int.pkl".format(DATA_FOLDER), "rb" ) )
 int_to_vocab = pickle.load( open( "{}/int_to_vocab.pkl".format(DATA_FOLDER), "rb" ) )

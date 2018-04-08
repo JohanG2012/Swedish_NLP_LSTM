@@ -181,7 +181,8 @@ def preprocess_sentences(location = DATA_LOCATION):
     print("Reading characters:")
     for line in sentence_list:
         counter.update(line)
-    top_chars = {key for key, _value in counter.most_common(56)}
+    top_chars = {key for key, _value 
+    in counter.most_common(56)}
 
 
     print("Converting Vocabulary to integers...")
