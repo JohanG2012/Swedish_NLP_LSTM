@@ -127,7 +127,7 @@ def train(model, epochs):
                     batch_time_testing = 0
                     for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(testing_sorted, noisy_testing_sorted, batch_size)):
                         start_time_testing = time.time()
-                        summary, accuracy, loss = sess.run([model.merged, accuracy, model.cost],
+                        summary, accuracy, loss = sess.run([model.merged, model.accuracy, model.cost],
                                                      {model.inputs: input_batch,
                                                       model.targets: target_batch,
                                                       model.inputs_length: input_length,
