@@ -4,7 +4,7 @@ import numpy as np
 from noise_maker import noise_maker
 
 # Contants
-DATA_LOCATION = "../data"
+DATA_LOCATION = "./data"
 
 def create_trainingsets(location = DATA_LOCATION):
     int_to_vocab = pickle.load(open(location + "/int_to_vocab.pkl", "rb"))

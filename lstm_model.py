@@ -8,7 +8,7 @@ import numpy as np
 import time
 from preprocess_data import clean_text
 
-DATA_FOLDER = '/data'
+DATA_FOLDER = './data'
 
 vocab_to_int = pickle.load( open( "{}/vocab_to_int.pkl".format(DATA_FOLDER), "rb" ) )
 int_to_vocab = pickle.load( open( "{}/int_to_vocab.pkl".format(DATA_FOLDER), "rb" ) )
@@ -158,6 +158,11 @@ def seq2seq_model(inputs, targets, keep_prob, inputs_length, targets_length, max
 
     return training_logits, inference_logits
 
+def build_accuracy(predictions, targets):
+    correct_prediction = tf.equal(tf.cast(tf.round(predictions), tf.int32), targets)
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    return accuracy
+
 # Build graph
 def build_graph(keep_prob, rnn_size, num_layers, batch_size, learning_rate, embedding_size, direction):
 
@@ -192,11 +197,13 @@ def build_graph(keep_prob, rnn_size, num_layers, batch_size, learning_rate, embe
         capped_gradients = [(tf.clip_by_value(grad, -5., 5.), var) for grad, var in gradients if grad is not None]
         train_op = optimizer.apply_gradients(capped_gradients)
 
+    accuracy = build_accuracy(predictions, targets)
+
     # Merge summaries
     merged = tf.summary.merge_all()
 
     # Export the nodes
-    export_nodes = ['inputs', 'targets', 'keep_prob', 'cost', 'inputs_length', 'targets_length', 'predictions', 'merged', 'train_op','optimizer']
+    export_nodes = ['inputs', 'targets', 'accuracy', 'keep_prob', 'cost', 'inputs_length', 'targets_length', 'predictions', 'merged', 'train_op','optimizer']
     Graph = namedtuple('Graph', export_nodes)
     local_dict = locals()
     graph = Graph(*[local_dict[each] for each in export_nodes])

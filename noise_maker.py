@@ -1,7 +1,7 @@
 import pickle
 import numpy as np
 
-DATA_FOLDER = '../data'
+DATA_FOLDER = './data'
 
 def noise_maker(sentence, threshold):
     vocab_to_int = pickle.load(open("{}/vocab_to_int.pkl".format(DATA_FOLDER), "rb"))
