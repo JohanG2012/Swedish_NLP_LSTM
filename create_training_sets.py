@@ -6,6 +6,36 @@ from noise_maker import noise_maker
 # Contants
 DATA_LOCATION = "./data"
 
+def create_debug_set(location = DATA_LOCATION):
+    int_to_vocab = pickle.load(open(location + "/int_to_vocab.pkl", "rb"))
+    good_sentences = pickle.load(open(location + "/good_sentences.pkl", "rb"))
+    print("📢 Injecting noise into training set...")
+    training = good_sentences[:15]
+    noisy_training_sentences = []
+    threshold = 0.9
+
+    print("📢 Injecting noise into training set...")
+    for sentence in training:
+        noisy_training_sentences.append(noise_maker(sentence, threshold))
+
+    for sentence in training[:5]:
+        print("Sentence: ")
+        print("".join([int_to_vocab[i] for i in sentence]))
+        print("With Noise: ")
+        print("".join([int_to_vocab[i] for i in noise_maker(sentence, threshold)]))
+        print()
+
+    with open(location + '/training_debug.pkl', 'wb') as pkl:
+        print('Writing trainingset to pickle...')
+        pickle.dump(training, pkl)
+
+    with open(location + '/noisy_training_debug.pkl', 'wb') as pkl:
+        print('Writing noisy training set to pickle...')
+        pickle.dump(noisy_training_sentences, pkl)
+
+    print("Trainingset: {0} sentences".format(len(training)))
+    print("Noisy training set: {0} sentences".format(len(noisy_training_sentences)))
+
 def create_trainingsets(location = DATA_LOCATION):
     int_to_vocab = pickle.load(open(location + "/int_to_vocab.pkl", "rb"))
     good_sentences = pickle.load(open(location + "/good_sentences.pkl", "rb"))
@@ -69,4 +99,5 @@ def create_trainingsets(location = DATA_LOCATION):
     print("Noisy testingset Mini: {0} sentences".format(len(noisy_testing_mini)))
 
 if __name__ == "__main__":
-    create_trainingsets(DATA_LOCATION)
+    #create_trainingsets(DATA_LOCATION)
+    create_debug_set()

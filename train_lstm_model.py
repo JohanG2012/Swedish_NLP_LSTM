@@ -7,27 +7,27 @@ import time
 DATA_FOLDER = './data'
 CHECKPOINT_FOLDER = './checkpoint'
 
-training_sorted = pickle.load( open( "{}/training_mini.pkl".format(DATA_FOLDER), "rb" ) )
-noisy_training_sorted = pickle.load(open("{}/noisy_training_mini.pkl".format(DATA_FOLDER), "rb"))
+training_sorted = pickle.load( open( "{}/training.pkl".format(DATA_FOLDER), "rb" ) )
+noisy_training_sorted = pickle.load(open("{}/noisy_training.pkl".format(DATA_FOLDER), "rb"))
 #training_sorted = pickle.load( open( "./data/training_sorted.pkl", "rb" ) )
-testing_sorted = pickle.load( open( "{}/testing_mini.pkl".format(DATA_FOLDER), "rb" ) )
-noisy_testing_sorted = pickle.load(open("{}/noisy_testing_mini.pkl".format(DATA_FOLDER), "rb"))
+testing_sorted = pickle.load( open( "{}/testing.pkl".format(DATA_FOLDER), "rb" ) )
+noisy_testing_sorted = pickle.load(open("{}/noisy_testing.pkl".format(DATA_FOLDER), "rb"))
 #testing_sorted = pickle.load( open( "./data/testing_sorted.pkl", "rb" ) )
 vocab_to_int = pickle.load( open( "{}/vocab_to_int.pkl".format(DATA_FOLDER), "rb" ) )
 int_to_vocab = pickle.load( open( "{}/int_to_vocab.pkl".format(DATA_FOLDER), "rb" ) )
 
 # Training parameters
-epochs = 10
+epochs = 30
 batch_size = 128
-num_layers = 2
+num_layers = 4
 rnn_size = 512
 embedding_size = 128
-learning_rate = 0.0005
+learning_rate = 0.0001
 direction = 2
 threshold = 0.95
-keep_probability = 0.75
+keep_probability = 0.3
 display_step = 1 # How often (batch) progress should be printed
-stop = 3 # After how many testing/validation the training should stop, if the batch loss have'nt decreased
+stop = 100 # After how many testing/validation the training should stop, if the batch loss have'nt decreased
 per_epoch = 5 # How many times per epoch the training should be tested/validated
 
 
@@ -93,14 +93,13 @@ def train(model, epochs):
             # Per batch
             for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(training_sorted, noisy_training_sorted, batch_size)):
                 start_time = time.time()
-                summary, accuracy, loss, _ = sess.run([model.merged, model.accuracy, model.cost, model.train_op],
+                summary, loss, _ = sess.run([model.merged, model.cost, model.train_op],
                                              {model.inputs: input_batch,
                                               model.targets: target_batch,
                                               model.inputs_length: input_length,
                                               model.targets_length: target_length,
                                               model.keep_prob: keep_probability})
 
-                train_acc.append(accuracy)
                 batch_loss += loss
                 end_time = time.time()
                 batch_time += end_time - start_time
@@ -108,13 +107,12 @@ def train(model, epochs):
 
                 # Print info
                 if batch_i % display_step == 0 and batch_i > 0:
-                    print('Epoch {:>3}/{} Batch {:>4}/{} - Loss: {:>6.3f}, Accuracy: {:>6.3}%, Seconds: {:>4.2f}'
+                    print('Epoch {:>3}/{} Batch {:>4}/{} - Loss: {:>6.3f}, Seconds: {:>4.2f}'
                           .format(epoch_i,
                                   epochs,
                                   batch_i,
                                   len(training_sorted) // batch_size,
                                   batch_loss / display_step,
-                                  np.mean(train_acc),
                                   batch_time))
                     # Reset
                     batch_loss = 0
@@ -127,14 +125,12 @@ def train(model, epochs):
                     batch_time_testing = 0
                     for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(testing_sorted, noisy_testing_sorted, batch_size)):
                         start_time_testing = time.time()
-                        summary, accuracy, loss = sess.run([model.merged, model.accuracy, model.cost],
+                        summary, loss = sess.run([model.merged, model.cost],
                                                      {model.inputs: input_batch,
                                                       model.targets: target_batch,
                                                       model.inputs_length: input_length,
                                                       model.targets_length: target_length,
                                                       model.keep_prob: 1})
-
-                        val_acc.append(accuracy)
                         batch_loss_testing += loss
                         end_time_testing = time.time()
                         batch_time_testing += end_time_testing - start_time_testing
@@ -142,10 +138,10 @@ def train(model, epochs):
                     n_batches_testing = batch_i + 1
 
                     # Print result
-                    print('Testing Loss: {:>6.3f}, Accuracy: {:>6.3f}, Seconds: {:>4.2f}'
-                          .format(batch_loss_testing / n_batches_testing, np.mean(val_acc), batch_time_testing))
+                    print('Testing Loss: {:>6.3f}, Seconds: {:>4.2f}'
+                          .format(batch_loss_testing / n_batches_testing, batch_time_testing))
 
-                    for i in range(10):
+                    for i in range(10, 20):
                         text = noisy_testing_sorted[i]
                         answer_logits = sess.run(model.predictions, {model.inputs: [text]*batch_size,
                                                                  model.inputs_length: [len(text)]*batch_size,
@@ -181,8 +177,8 @@ def train(model, epochs):
                 break
 
 def train_lstm_model():
-    for keep_probability in [0.75]:
-        for num_layers in [2]:
+    for keep_probability in [0.3]:
+        for num_layers in [4]:
             for threshold in [0.95]:
                 model = build_graph(keep_probability, rnn_size, num_layers, batch_size, learning_rate, embedding_size, direction)
                 train(model, epochs)
