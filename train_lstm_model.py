@@ -27,7 +27,7 @@ direction = 2
 threshold = 0.95
 keep_probability = 0.3
 display_step = 1 # How often (batch) progress should be printed
-stop = 100 # After how many testing/validation the training should stop, if the batch loss have'nt decreased
+stop = 30 # After how many testing/validation the training should stop, if the batch loss have'nt decreased
 per_epoch = 5 # How many times per epoch the training should be tested/validated
 
 
