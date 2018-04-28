@@ -3,33 +3,42 @@ import tensorflow as tf
 import pickle
 import numpy as np
 import time
+from argparse import ArgumentParser
+import os
+
+arguments = ArgumentParser()
+arguments.add_argument("name")
+args = arguments.parse_args()
 
 DATA_FOLDER = './data'
-CHECKPOINT_FOLDER = './checkpoint'
+CHECKPOINT_FOLDER = './checkpoints/{}'.format(args.name)
+USE_CHECKPOINT_FOLDER = './use_checkpoints/{}'.format(args.name)
+tensorflow_log = 'tensorflow.log'
+validation_restore = 'validation_restore.log'
+loss_log = 'loss.log'
 
-training_sorted = pickle.load( open( "{}/training.pkl".format(DATA_FOLDER), "rb" ) )
-noisy_training_sorted = pickle.load(open("{}/noisy_training.pkl".format(DATA_FOLDER), "rb"))
+training_sorted = pickle.load( open( "{}/training_mini.pkl".format(DATA_FOLDER), "rb" ) )
+noisy_training_sorted = pickle.load(open("{}/noisy_training_mini.pkl".format(DATA_FOLDER), "rb"))
 #training_sorted = pickle.load( open( "./data/training_sorted.pkl", "rb" ) )
-testing_sorted = pickle.load( open( "{}/testing.pkl".format(DATA_FOLDER), "rb" ) )
-noisy_testing_sorted = pickle.load(open("{}/noisy_testing.pkl".format(DATA_FOLDER), "rb"))
+testing_sorted = pickle.load( open( "{}/testing_mini.pkl".format(DATA_FOLDER), "rb" ) )
+noisy_testing_sorted = pickle.load(open("{}/noisy_testing_mini.pkl".format(DATA_FOLDER), "rb"))
 #testing_sorted = pickle.load( open( "./data/testing_sorted.pkl", "rb" ) )
 vocab_to_int = pickle.load( open( "{}/vocab_to_int.pkl".format(DATA_FOLDER), "rb" ) )
 int_to_vocab = pickle.load( open( "{}/int_to_vocab.pkl".format(DATA_FOLDER), "rb" ) )
 
 # Training parameters
-epochs = 30
-batch_size = 128
-num_layers = 4
+epochs = 10000
+batch_size = 16
+num_layers = 8
 rnn_size = 512
 embedding_size = 128
-learning_rate = 0.0001
+learning_rate = 0.0005
 direction = 2
-threshold = 0.95
+threshold = 0.9
 keep_probability = 0.3
 display_step = 1 # How often (batch) progress should be printed
-stop = 30 # After how many testing/validation the training should stop, if the batch loss have'nt decreased
-per_epoch = 5 # How many times per epoch the training should be tested/validated
-
+stop = 3000 # After how many testing/validation the training should stop, if the batch loss have'nt decreased
+per_epoch = 1 # How many times per epoch the training should be tested/validated
 
 # Pad sentences to the same length
 def pad_sentence_batch(sentence_batch):
@@ -73,19 +82,32 @@ def train(model, epochs):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
+        saver = tf.train.Saver()
+
         # Summary of testing loss
         testing_loss_summary = []
+
+        print()
+        print("Training LSTM Model...")
 
         # Keep track of which batch iteration is being trained
         iteration = 0
         stop_early = 0
         testing_check = (len(training_sorted)//batch_size//per_epoch)-1
-
-        print()
-        print("Training LSTM Model...")
+        try:
+            epoch_i = int(open(tensorflow_log,'r').read().split('\n')[-2])+1
+            validrestore = float(open("{0}/{1}".format(CHECKPOINT_FOLDER, validation_restore),'r').read().split('\n')[-2])
+            print("Loading validation loss from log checkpoint. Current min. validation loss: {}".format(validrestore))
+            print('Loading Checkpoint. Starting at epoch nr: {}'.format(epoch_i))
+        except:
+            epoch_i = 1
+            validrestore = 10000
 
         # Per epoch
-        for epoch_i in range(1, epochs+1):
+        while epoch_i <= epochs:
+            if epoch_i != 1:
+                saver.restore(sess,"{}/lstm.ckpt".format(CHECKPOINT_FOLDER))
+            epoch_loss = 1
             batch_loss = 0
             batch_time = 0
             train_acc = []
@@ -141,8 +163,17 @@ def train(model, epochs):
                     print('Testing Loss: {:>6.3f}, Seconds: {:>4.2f}'
                           .format(batch_loss_testing / n_batches_testing, batch_time_testing))
 
+                    validloss = batch_loss_testing / n_batches_testing
+
+                    if not os.path.exists(CHECKPOINT_FOLDER):
+                        os.makedirs(CHECKPOINT_FOLDER)
+
+                    with open("{0}/{1}".format(CHECKPOINT_FOLDER, loss_log),'a') as f:
+                        f.write("Epoch: {0} Validation loss: {1}\n".format(epoch_i, validloss))
+
                     for i in range(10, 20):
                         text = noisy_testing_sorted[i]
+                        correct = testing_sorted[i]
                         answer_logits = sess.run(model.predictions, {model.inputs: [text]*batch_size,
                                                                  model.inputs_length: [len(text)]*batch_size,
                                                                  model.targets_length: [len(text)+1],
@@ -153,24 +184,34 @@ def train(model, epochs):
 
                         print('  Validation Input: {}'.format("".join([int_to_vocab[i] for i in text])))
                         print('  Validation Output: {}'.format("".join([int_to_vocab[i] for i in answer_logits if i != pad])))
+                        print('  Correct: {}'.format("".join([int_to_vocab[i] for i in correct if i != pad])))
+                        print('  Is Correct: {}'.format(answer_logits == correct))
+                        print()
 
                     # Reset
                     batch_time_testing = 0
 
                     # Save new model if new minimum
                     testing_loss_summary.append(batch_loss_testing)
-                    if batch_loss_testing <= min(testing_loss_summary):
+                    if batch_loss_testing <= min(testing_loss_summary) and validloss <= validrestore:
                         print('Model is improved, Saving!')
                         stop_early = 0
-                        checkpoint = "{}/lstm.ckpt".format(CHECKPOINT_FOLDER)
-                        saver = tf.train.Saver()
+                        checkpoint = "{}/lstm.ckpt".format(USE_CHECKPOINT_FOLDER)
                         saver.save(sess, checkpoint)
+                        with open("{0}/{1}".format(CHECKPOINT_FOLDER, validation_restore),'a') as f:
+                            f.write(str(validloss)+'\n')
 
                     else:
                         print("Model has not improved, will not save.")
                         stop_early += 1
                         if stop_early == stop:
                             break
+
+                    checkpoint = "{}/lstm.ckpt".format(CHECKPOINT_FOLDER)
+                    saver.save(sess, checkpoint)
+                    with open("{0}/{1}".format(CHECKPOINT_FOLDER, tensorflow_log),'a') as f:
+                        f.write(str(epoch_i)+'\n')
+                    epoch_i += 1
 
             if stop_early == stop:
                 print("Model has not improved for a while, stopping to avoid overfitting")
