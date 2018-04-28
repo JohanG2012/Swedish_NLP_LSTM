@@ -99,5 +99,5 @@ def create_trainingsets(location = DATA_LOCATION):
     print("Noisy testingset Mini: {0} sentences".format(len(noisy_testing_mini)))
 
 if __name__ == "__main__":
-    #create_trainingsets(DATA_LOCATION)
-    create_debug_set()
+    create_trainingsets(DATA_LOCATION)
+    #create_debug_set()
