@@ -8,15 +8,18 @@ def noise_maker(sentence, threshold):
     letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m',
            'n','o','p','q','r','s','t','u','v','w','x','y','z','å', 'ä', 'ö']
     noisy_sentence = []
+    jump = 0
     i = 0
     while i < len(sentence):
         random = np.random.uniform(0,1,1)
 
         # threshold high = Most characters correct
-        if random < threshold:
+        if random < threshold or jump == 1:
             noisy_sentence.append(sentence[i])
+            jump = 0
         else:
             new_random = np.random.uniform(0,1,1)
+            jump = 1
             # ~33% chance - swap locations
             if new_random > 0.67:
                 if i == (len(sentence) - 1):
