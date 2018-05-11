@@ -19,10 +19,10 @@ int_to_vocab = pickle.load( open( "{}/int_to_vocab.pkl".format(DATA_FOLDER), "rb
 # Training parameters
 epochs = 30
 batch_size = 128
-num_layers = 4
+num_layers = 8
 rnn_size = 512
 embedding_size = 128
-learning_rate = 0.0001
+learning_rate = 0.0005
 direction = 2
 threshold = 0.95
 keep_probability = 0.3
@@ -165,7 +165,6 @@ def train(model, epochs):
                         checkpoint = "{}/lstm.ckpt".format(CHECKPOINT_FOLDER)
                         saver = tf.train.Saver()
                         saver.save(sess, checkpoint)
-
                     else:
                         print("Model has not improved, will not save.")
                         stop_early += 1
