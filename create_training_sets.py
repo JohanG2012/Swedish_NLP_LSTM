@@ -55,10 +55,15 @@ def create_trainingsets(location = DATA_LOCATION):
     testing_loop = testing[:]
     validation_loop = validation[:]
 
+    training.clear()
+    testing.clear()
+    validation.clear()
+
     print("📢 Injecting noise into training set...")
     for sentence in training_loop:
         new_sentence = noise_maker(sentence, threshold)
         noisy_training_sentences.append(new_sentence)
+        training.append(sentence)
         new_sentence = write_apart(sentence)
         if (new_sentence != sentence):
             noisy_training_sentences.append(new_sentence)
@@ -73,6 +78,7 @@ def create_trainingsets(location = DATA_LOCATION):
         new_sentence = noise_maker(sentence, threshold)
         if (new_sentence != sentence):
             typos_testing_sentences.append(new_sentence)
+            testing.append(sentence)
         new_sentence = write_apart(sentence)
         if (new_sentence != sentence):
             two_pass_testing_sentences.append(new_sentence)
@@ -86,6 +92,7 @@ def create_trainingsets(location = DATA_LOCATION):
     for sentence in validation_loop:
         new_sentence = noise_maker(sentence, threshold)
         noisy_validation_sentences.append(new_sentence)
+        validation.append(sentence)
         new_sentence = write_apart(sentence)
         if (new_sentence != sentence):
             noisy_validation_sentences.append(new_sentence)
@@ -94,6 +101,11 @@ def create_trainingsets(location = DATA_LOCATION):
         if (new_sentence != sentence):
             noisy_validation_sentences.append(new_sentence)
             validation.append(sentence)
+
+    print("".join([int_to_vocab[i] for i in validation[1]]))
+    print("".join([int_to_vocab[i] for i in noisy_validation_sentences[1]]))
+    print("".join([int_to_vocab[i] for i in training[1]]))
+    print("".join([int_to_vocab[i] for i in noisy_training_sentences[1]]))
 
     for sentence in training[:5]:
         print("Sentence: ")
