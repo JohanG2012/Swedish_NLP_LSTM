@@ -10,6 +10,8 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
+checkpoints
+use_checkpoints
 data/*.tar
 data/*.2bz
 data/*.bz2
