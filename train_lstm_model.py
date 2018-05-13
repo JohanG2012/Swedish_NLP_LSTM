@@ -19,10 +19,8 @@ loss_log = 'loss.log'
 
 training_sorted = pickle.load( open( "{}/training_mini.pkl".format(DATA_FOLDER), "rb" ) )
 noisy_training_sorted = pickle.load(open("{}/noisy_training_mini.pkl".format(DATA_FOLDER), "rb"))
-#training_sorted = pickle.load( open( "./data/training_sorted.pkl", "rb" ) )
 testing_sorted = pickle.load( open( "{}/validation_mini.pkl".format(DATA_FOLDER), "rb" ) )
 noisy_testing_sorted = pickle.load(open("{}/noisy_validation_mini.pkl".format(DATA_FOLDER), "rb"))
-#testing_sorted = pickle.load( open( "./data/testing_sorted.pkl", "rb" ) )
 vocab_to_int = pickle.load( open( "{}/vocab_to_int.pkl".format(DATA_FOLDER), "rb" ) )
 int_to_vocab = pickle.load( open( "{}/int_to_vocab.pkl".format(DATA_FOLDER), "rb" ) )
 
