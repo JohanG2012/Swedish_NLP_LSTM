@@ -51,9 +51,12 @@ def create_trainingsets(location = DATA_LOCATION):
     testing, validation = train_test_split(testing, test_size = 0.5, random_state = 2)
 
     threshold = 0.9
+    training_loop = training[:]
+    testing_loop = testing[:]
+    validation_loop = validation[:]
 
     print("📢 Injecting noise into training set...")
-    for sentence in training:
+    for sentence in training_loop:
         new_sentence = noise_maker(sentence, threshold)
         noisy_training_sentences.append(new_sentence)
         new_sentence = write_apart(sentence)
@@ -66,7 +69,7 @@ def create_trainingsets(location = DATA_LOCATION):
             training.append(sentence)
 
     print("📢 Injecting noise into testing set...")
-    for sentence in testing:
+    for sentence in testing_loop:
         new_sentence = noise_maker(sentence, threshold)
         if (new_sentence != sentence):
             typos_testing_sentences.append(new_sentence)
@@ -80,7 +83,7 @@ def create_trainingsets(location = DATA_LOCATION):
             testing.append(sentence)
 
     print("📢 Injecting noise into validation set...")
-    for sentence in validation:
+    for sentence in validation_loop:
         new_sentence = noise_maker(sentence, threshold)
         noisy_validation_sentences.append(new_sentence)
         new_sentence = write_apart(sentence)
