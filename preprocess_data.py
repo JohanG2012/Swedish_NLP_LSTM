@@ -27,74 +27,6 @@ RIGHT_BRACKET_FILTER = re.compile(r'[\)\]\}\⁾\₎\❩\❫\﹚\）]', re.UNICOD
 ALLOWED_SPECIAL_CHARS = """-!?/;"'%&<>.()[]{}@#:,|=*"""
 CLEANER = re.compile(r'[^\w\s{}]'.format(re.escape(ALLOWED_SPECIAL_CHARS)), re.UNICODE)
 
-def parse_to_plaintext(location):
-    start_time = dt.datetime.now()
-    for subdir, dirs, files in os.walk(location):
-        for file in files:
-            if file.endswith('.xml'):
-                with open(subdir + '/' + file, buffering=2000) as xml_file:
-                    def numrepl(matchobj):
-                        numbers = {'0': 'noll', '1':'ett', '2':'två', '3':'tre','4':'fyra','5':'fem','6':'sex','7':'sju','8':'åtta','9':'nio'}
-                        return numbers[matchobj.group(0)] + ' '
-
-                    r = re.compile('<[^>]*>')
-                    n = re.compile('\n')
-                    s = re.compile('[^A-Za-z0-9ÅÄÖÉåäöé ]')
-                    p = re.compile(' +')
-                    num = re.compile('\d')
-                    print('Removing w tags...')
-                    data = r.sub('',xml_file.read())
-                    print('Converting newline to spaces...')
-                    data = n.sub(' ',data)
-                    print('Stripping special characters...')
-                    data = s.sub('',data)
-                    print('Converting numbers to words...')
-                    data = num.sub(numrepl, data)
-                    print('Converting multiple spaces to single spaces...')
-                    data = p.sub(' ',data)
-                    print('Converting to lowercase...')
-                    data = data.lower()
-                with open(location + "vocabulary_plain.pkl", "ab") as pkl:
-                    print("Writing data to pickle...")
-                    pickle.dump(data, pkl)
-                end_time = dt.datetime.now()
-                os.remove(subdir + '/' + file)
-                print("Reading words took {} minutes to run.".format((end_time-start_time).total_seconds() / 60.0))
-
-def old_parse_xml(location):
-    print("Parsing XML to vocabulary pickle...")
-    print("Parsing one billion words, this might take some time...")
-    data = list()
-    log_every = 100000
-    start_time = dt.datetime.now()
-    data_length = 0
-
-    for subdir, dirs, files in os.walk(location):
-        for file in files:
-            if file.endswith(".xml"):
-                with open(subdir + "/" + file, buffering=200000) as xml_file:
-                    print("Processing: " + subdir + "/" + file)
-                    for line in xml_file:
-                        line = line.rstrip()
-
-                        # Check if not a row with only a start or end tag i.e sentences
-                        if "</" in line and not line[1:2] == "/":
-                            node = minidom.parseString(line)
-                            data_length += 1
-                            data.append(node.getElementsByTagName('w')[0].firstChild.nodeValue)
-                            if data_length == log_every:
-                                print("{0} words has been added to the vocabulary. {1}% of 100%".format(data_length, round((data_length / 1000000000) * 100, 3)))
-                                log_every += 100000
-                with open(location + "vocalbulary.pkl", "ab") as pkl:
-                    print("Writing data to pickle...")
-                    pickle.dump(data, pkl)
-                print("Removing " + subdir + "/" + file + "...")
-                os.remove(subdir + "/" + file)
-                # Empty list
-                data[:] = []
-    end_time = dt.datetime.now()
-    print("Reading data took {} minutes to run.".format((end_time-start_time).total_seconds() / 60.0))
-
 def parse_xml(location = DATA_LOCATION):
     words = 0
     log_every = 100000
@@ -181,7 +113,7 @@ def preprocess_sentences(location = DATA_LOCATION):
     print("Reading characters:")
     for line in sentence_list:
         counter.update(line)
-    top_chars = {key for key, _value 
+    top_chars = {key for key, _value
     in counter.most_common(56)}
 
 
