@@ -13,7 +13,6 @@ DATA_FOLDER = './data'
 vocab_to_int = pickle.load( open( "{}/vocab_to_int.pkl".format(DATA_FOLDER), "rb" ) )
 int_to_vocab = pickle.load( open( "{}/int_to_vocab.pkl".format(DATA_FOLDER), "rb" ) )
 training_sorted = pickle.load( open( "{}/training_mini.pkl".format(DATA_FOLDER), "rb" ) )
-testing_sorted = pickle.load( open( "{}/testing_mini.pkl".format(DATA_FOLDER), "rb" ) )
 
 # Model input pipes for data feed to the model
 '''

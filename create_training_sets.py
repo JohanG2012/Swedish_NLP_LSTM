@@ -58,6 +58,9 @@ def create_trainingsets(location = DATA_LOCATION):
     training.clear()
     testing.clear()
     validation.clear()
+    gender_testing = []
+    two_pass_testing = []
+    typos_testing = []
 
     print("📢 Injecting noise into training set...")
     for sentence in training_loop:
@@ -78,15 +81,15 @@ def create_trainingsets(location = DATA_LOCATION):
         new_sentence = noise_maker(sentence, threshold)
         if (new_sentence != sentence):
             typos_testing_sentences.append(new_sentence)
-            testing.append(sentence)
+            typos_testing.append(sentence)
         new_sentence = write_apart(sentence)
         if (new_sentence != sentence):
             two_pass_testing_sentences.append(new_sentence)
-            testing.append(sentence)
+            two_pass_testing.append(sentence)
         new_sentence = switch_gender(sentence)
         if (new_sentence != sentence):
             gender_testing_sentences.append(new_sentence)
-            testing.append(sentence)
+            gender_testing.append(sentence)
 
     print("📢 Injecting noise into validation set...")
     for sentence in validation_loop:
@@ -102,11 +105,6 @@ def create_trainingsets(location = DATA_LOCATION):
             noisy_validation_sentences.append(new_sentence)
             validation.append(sentence)
 
-    print("".join([int_to_vocab[i] for i in validation[1]]))
-    print("".join([int_to_vocab[i] for i in noisy_validation_sentences[1]]))
-    print("".join([int_to_vocab[i] for i in training[1]]))
-    print("".join([int_to_vocab[i] for i in noisy_training_sentences[1]]))
-
     for sentence in training[:5]:
         print("Sentence: ")
         print("".join([int_to_vocab[i] for i in sentence]))
@@ -116,22 +114,28 @@ def create_trainingsets(location = DATA_LOCATION):
     with open(location + '/training.pkl', 'wb') as pkl:
         print('Writing trainingset to pickle...')
         pickle.dump(training, pkl)
-    with open(location + '/testing.pkl', 'wb') as pkl:
-        print('Writing testingset to pickle...')
-        pickle.dump(testing, pkl)
+    with open(location + '/gender_testing.pkl', 'wb') as pkl:
+        print('Writing gender testingset to pickle...')
+        pickle.dump(gender_testing, pkl)
+    with open(location + '/two_pass_testing.pkl', 'wb') as pkl:
+        print('Writing two-pass testingset to pickle...')
+        pickle.dump(two_pass_testing, pkl)
+    with open(location + '/typos_testing.pkl', 'wb') as pkl:
+        print('Writing typos testingset to pickle...')
+        pickle.dump(typos_testing, pkl)
     with open(location + '/validation.pkl', 'wb') as pkl:
         print("Writing validation set to pickle...")
         pickle.dump(validation, pkl)
     with open(location + '/noisy_training.pkl', 'wb') as pkl:
         print('Writing noisy training set to pickle...')
         pickle.dump(noisy_training_sentences, pkl)
-    with open(location + '/typos_testing.pkl', 'wb') as pkl:
+    with open(location + '/noisy_typos_testing.pkl', 'wb') as pkl:
         print('Writing typos testingset to pickle...')
         pickle.dump(typos_testing_sentences, pkl)
-    with open(location + '/gender_testing.pkl', 'wb') as pkl:
+    with open(location + '/noisy_gender_testing.pkl', 'wb') as pkl:
         print('Writing gender testingset to pickle...')
         pickle.dump(gender_testing_sentences, pkl)
-    with open(location + '/two_pass_testing.pkl', 'wb') as pkl:
+    with open(location + '/noisy_two_pass_testing.pkl', 'wb') as pkl:
         print('Writing two-pass testingset to pickle...')
         pickle.dump(two_pass_testing_sentences, pkl)
     with open(location + '/noisy_validation.pkl', 'wb') as pkl:
@@ -140,10 +144,12 @@ def create_trainingsets(location = DATA_LOCATION):
 
     training_mini = training[:50000]
     noisy_training_mini = noisy_training_sentences[:50000]
-    testing_mini = testing[:9000]
-    typos_testing_mini = typos_testing_sentences[:9000]
-    gender_testing_mini = gender_testing_sentences[:9000]
-    two_pass_testing_mini = two_pass_testing_sentences[:9000]
+    gender_testing_mini = gender_testing[:9000]
+    two_pass_testing_mini = two_pass_testing[:9000]
+    typos_testing_mini = typos_testing[:9000]
+    noisy_typos_testing_mini = typos_testing_sentences[:9000]
+    noisy_gender_testing_mini = gender_testing_sentences[:9000]
+    noisy_two_pass_testing_mini = two_pass_testing_sentences[:9000]
     validation_mini = validation[:9000]
     noisy_validation_mini = noisy_validation_sentences[:9000]
 
@@ -153,9 +159,6 @@ def create_trainingsets(location = DATA_LOCATION):
     with open(location + '/noisy_training_mini.pkl', 'wb') as pkl:
         print('Writing noisy_training_mini to pickle...')
         pickle.dump(noisy_training_mini, pkl)
-    with open(location + '/testing_mini.pkl', 'wb') as pkl:
-        print('Writing testing_mini to pickle...')
-        pickle.dump(testing_mini, pkl)
     with open(location + '/typos_testing_mini.pkl', 'wb') as pkl:
         print('Writing typos testing mini to pickle...')
         pickle.dump(typos_testing_mini, pkl)
@@ -165,6 +168,17 @@ def create_trainingsets(location = DATA_LOCATION):
     with open(location + '/two_pass_testing_mini.pkl', 'wb') as pkl:
         print('Writing two-pass testing mini to pickle...')
         pickle.dump(two_pass_testing_mini, pkl)
+
+    with open(location + '/noisy_typos_testing_mini.pkl', 'wb') as pkl:
+        print('Writing typos testing mini to pickle...')
+        pickle.dump(noisy_typos_testing_mini, pkl)
+    with open(location + '/noisy_gender_testing_mini.pkl', 'wb') as pkl:
+        print('Writing gender testing mini to pickle...')
+        pickle.dump(noisy_gender_testing_mini, pkl)
+    with open(location + '/noisy_two_pass_testing_mini.pkl', 'wb') as pkl:
+        print('Writing two-pass testing mini to pickle...')
+        pickle.dump(noisy_two_pass_testing_mini, pkl)
+
     with open(location + '/validation_mini.pkl', 'wb') as pkl:
         print('Writing validation_mini to pickle...')
         pickle.dump(validation_mini, pkl)
@@ -180,7 +194,6 @@ def create_trainingsets(location = DATA_LOCATION):
     print("Two-pass testing set: {0} sentences".format(len(two_pass_testing_sentences)))
     print("Trainingset Mini: {0} sentences".format(len(training_mini)))
     print("Noisy training set Mini: {0} sentences".format(len(noisy_training_mini)))
-    print("Testingset Mini: {0} sentences".format(len(testing_mini)))
     print("Typos testingset Mini: {0} sentences".format(len(typos_testing_mini)))
     print("Gender testingset Mini: {0} sentences".format(len(gender_testing_mini)))
     print("Two-pass testingset Mini: {0} sentences".format(len(two_pass_testing_mini)))

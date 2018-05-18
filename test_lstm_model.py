@@ -24,8 +24,12 @@ failed_log = 'failed.log'
 training_sorted = pickle.load( open( "{}/training_mini.pkl".format(DATA_FOLDER), "rb" ) )
 noisy_training_sorted = pickle.load(open("{}/noisy_training_mini.pkl".format(DATA_FOLDER), "rb"))
 #training_sorted = pickle.load( open( "./data/training_sorted.pkl", "rb" ) )
-testing_sorted = pickle.load( open( "{}/testing_mini.pkl".format(DATA_FOLDER), "rb" ) )
-noisy_testing_sorted = pickle.load(open("{}/noisy_testing_mini.pkl".format(DATA_FOLDER), "rb"))
+gender_testing_sorted = pickle.load( open( "{}/gender_testing_mini.pkl".format(DATA_FOLDER), "rb" ) )
+typos_testing_sorted = pickle.load( open( "{}/typos_testing_mini.pkl".format(DATA_FOLDER), "rb" ) )
+two_pass_testing_sorted = pickle.load( open( "{}/two_pass_testing_mini.pkl".format(DATA_FOLDER), "rb" ) )
+noisy_gender_testing_sorted = pickle.load(open("{}/noisy_gender_testing_mini.pkl".format(DATA_FOLDER), "rb"))
+noisy_typos_testing_sorted = pickle.load(open("{}/noisy_typos_testing_mini.pkl".format(DATA_FOLDER), "rb"))
+noisy_two_pass_testing_sorted = pickle.load(open("{}/noisy_two_pass_testing_mini.pkl".format(DATA_FOLDER), "rb"))
 #testing_sorted = pickle.load( open( "./data/testing_sorted.pkl", "rb" ) )
 vocab_to_int = pickle.load( open( "{}/vocab_to_int.pkl".format(DATA_FOLDER), "rb" ) )
 int_to_vocab = pickle.load( open( "{}/int_to_vocab.pkl".format(DATA_FOLDER), "rb" ) )
@@ -80,9 +84,7 @@ def get_batches(sentences, noisy_sentences, batch_size):
         yield pad_sentences_noisy_batch, pad_sentences_batch, pad_sentences_noisy_lengths, pad_sentences_lengths
 
 
-def test(model):
-    epochs = 1;
-
+def test(model, noisy_set, set, test_type):
     # Start session
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
@@ -93,12 +95,12 @@ def test(model):
         testing_loss_summary = []
 
         print()
-        print("Testing LSTM Model...")
+        print("Testing LSTM Model - {}...".format(test_type))
 
         # Keep track of which batch iteration is being trained
         iteration = 0
         stop_early = 0
-        testing_check = (len(training_sorted)//batch_size//per_epoch)-1
+        testing_check = (len(set)//batch_size//per_epoch)-1
 
         saver.restore(sess,"{}/lstm.ckpt".format(USE_CHECKPOINT_FOLDER))
         epoch_loss = 1
@@ -109,8 +111,7 @@ def test(model):
         is_correct = 0
 
         # Per batch
-        for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(training_sorted, noisy_training_sorted, batch_size)):
-
+        for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(set, noisy_set, batch_size)):
             # Run validation testing
             if batch_i % testing_check == 0 and batch_i > 0:
                 val_acc = []
@@ -123,14 +124,15 @@ def test(model):
 
                 print_tested_each = 100
 
-                for i in range(0, len(noisy_testing_sorted)):
+                for i in range(0, len(noisy_set)):
+                #for i in range(0, 100):
 
                     if (tested > print_tested_each):
                         print_tested_each  += 100
-                        print("Tested {}% of test set".format((ceil(i / len(noisy_testing_sorted) * 100) * 100) / 100.0))
+                        print("Tested {}% of test set".format((ceil(i / len(noisy_set) * 100) * 100) / 100.0))
 
-                    text = noisy_testing_sorted[i]
-                    correct = testing_sorted[i]
+                    text = noisy_set[i]
+                    correct = set[i]
                     answer_logits = sess.run(model.predictions, {model.inputs: [text]*batch_size,
                                                              model.inputs_length: [len(text)]*batch_size,
                                                              model.targets_length: [len(text)+1],
@@ -146,31 +148,41 @@ def test(model):
                     tested += 1
                     if (answer_logits == correct):
                         is_correct += 1
-                        with open("{0}/{1}".format(USE_CHECKPOINT_FOLDER, success_log),'a') as f:
+                        with open("{0}/{1}".format(USE_CHECKPOINT_FOLDER, "{}_success.log".format(test_type)),'a') as f:
                             f.write('  Validation Input: {}\n'.format("".join([int_to_vocab[i] for i in text])))
-                        with open("{0}/{1}".format(USE_CHECKPOINT_FOLDER, success_log),'a') as f:
+                        with open("{0}/{1}".format(USE_CHECKPOINT_FOLDER, "{}_success.log".format(test_type)),'a') as f:
                             f.write('  Validation Output: {}\n\n'.format(answer_logits))
                     else:
-                        with open("{0}/{1}".format(USE_CHECKPOINT_FOLDER, failed_log),'a') as f:
+                        with open("{0}/{1}".format(USE_CHECKPOINT_FOLDER, "{}_failed.log".format(test_type)),'a') as f:
                             f.write('  Validation Input: {}\n'.format("".join([int_to_vocab[i] for i in text])))
-                        with open("{0}/{1}".format(USE_CHECKPOINT_FOLDER, failed_log),'a') as f:
+                        with open("{0}/{1}".format(USE_CHECKPOINT_FOLDER, "{}_failed.log".format(test_type)),'a') as f:
                             f.write('  Validation Output: {}\n\n'.format(answer_logits))
 
                 # Reset
                 batch_time_testing = 0
+                print(test_type)
                 print("Accuracy %: {}%".format((ceil((is_correct / tested) * 100) * 100) / 100.0))
                 print("Exact Accuracy: {}".format(is_correct / tested))
                 with open("{0}/{1}".format(USE_CHECKPOINT_FOLDER, accuracy_log),'a') as f:
+                    f.write("{}\n".format(test_type))
                     f.write("Accuracy %: {}%\n".format((ceil((is_correct / tested) * 100) * 100) / 100.0))
                 with open("{0}/{1}".format(USE_CHECKPOINT_FOLDER, accuracy_log),'a') as f:
                     f.write("Exact Accuracy: {}\n\n".format(is_correct / tested))
+
+                return is_correct / tested
 
 def test_lstm_model():
     for keep_probability in [0.3]:
         for num_layers in [4]:
             for threshold in [0.95]:
                 model = build_graph(keep_probability, rnn_size, num_layers, batch_size, learning_rate, embedding_size, direction)
-                test(model)
+                total = 0
+                total += test(model,noisy_typos_testing_sorted, typos_testing_sorted, "typos")
+                total += test(model,noisy_gender_testing_sorted, gender_testing_sorted, "gender")
+                total += test(model,noisy_two_pass_testing_sorted, two_pass_testing_sorted, "two pass")
+                test(model,typos_testing_sorted, typos_testing_sorted, "falsepositives")
+                print("Total Accuracy %: {}".format((ceil((total / 3) * 100) * 100) / 100.0))
+                print("Total Accuracy Exact: {}".format(total / 3))
 
 if __name__ == "__main__":
     test_lstm_model()
