@@ -9,7 +9,6 @@ import xml.etree.cElementTree as ET
 import pandas as pd
 from collections import Counter
 import random
-from noise_maker import noise_maker
 import datetime as dt
 import pickle
 
@@ -168,9 +167,12 @@ def preprocess_sentences(location = DATA_LOCATION):
         lengths.append(len(sentence))
     lengths = pd.DataFrame(lengths, columns=["counts"])
 
+    punctuation = [vocab_to_int["."], vocab_to_int["!"], vocab_to_int["?"]]
+
     for sentence in int_sentences:
         if len(sentence) <= max_length and len(sentence) >= min_length:
-            good_sentences.append(sentence)
+            if sentence[-1] in punctuation and sentence.count(vocab_to_int[" "]) >= 5:
+                good_sentences.append(sentence)
 
     print("We will use {} sentences to train and test our model.".format(len(good_sentences)))
     with open(location + '/vocab_to_int.pkl', 'wb') as pkl:

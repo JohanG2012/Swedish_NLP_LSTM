@@ -12,7 +12,6 @@ top_words = pickle.load(open("{}/top_words.pkl".format(DATA_FOLDER), "rb"))
 apart_pattern = re.compile(r'({})(\S+)'.format("|".join(top_words)), re.I)
 
 def noise_maker(sentence, threshold):
-
     letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m',
            'n','o','p','q','r','s','t','u','v','w','x','y','z','å', 'ä', 'ö']
     noisy_sentence = []

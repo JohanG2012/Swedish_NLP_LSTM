@@ -3,7 +3,6 @@ import pickle
 from tensorflow.python.layers.core import Dense
 from tensorflow.python.ops.rnn_cell_impl import _zero_state_tensors
 from collections import namedtuple
-from preprocess_data import noise_maker
 import numpy as np
 import time
 from preprocess_data import clean_text
@@ -202,7 +201,7 @@ def build_graph(keep_prob, rnn_size, num_layers, batch_size, learning_rate, embe
     merged = tf.summary.merge_all()
 
     # Export the nodes
-    export_nodes = ['inputs', 'targets', 'keep_prob', 'cost', 'inputs_length', 'targets_length', 'predictions', 'merged', 'train_op','optimizer']
+    export_nodes = ['inputs', 'targets', 'keep_prob', 'cost', 'inputs_length', 'targets_length', 'predictions', 'merged', 'train_op','accuracy', 'optimizer']
     Graph = namedtuple('Graph', export_nodes)
     local_dict = locals()
     graph = Graph(*[local_dict[each] for each in export_nodes])

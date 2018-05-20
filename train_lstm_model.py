@@ -26,8 +26,8 @@ int_to_vocab = pickle.load( open( "{}/int_to_vocab.pkl".format(DATA_FOLDER), "rb
 
 # Training parameters
 epochs = 10000
-batch_size = 16
-num_layers = 8
+batch_size = 32
+num_layers = 4
 rnn_size = 512
 embedding_size = 128
 learning_rate = 0.0005
@@ -35,7 +35,7 @@ direction = 2
 threshold = 0.9
 keep_probability = 0.3
 display_step = 1 # How often (batch) progress should be printed
-stop = 3000 # After how many testing/validation the training should stop, if the batch loss have'nt decreased
+stop = 10 # After how many testing/validation the training should stop, if the batch loss have'nt decreased
 per_epoch = 1 # How many times per epoch the training should be tested/validated
 
 # Pad sentences to the same length

@@ -1,4 +1,4 @@
-from download_data import download_files
+#from download_data import download_files
 from create_training_sets import create_trainingsets
 #from use_lstm_model import use_lstm_model
 #from train_lstm_model import train_lstm_model
