@@ -16,7 +16,15 @@ def noise_maker(sentence, threshold):
            'n','o','p','q','r','s','t','u','v','w','x','y','z','å', 'ä', 'ö']
     noisy_sentence = []
     i = 0
+    changed_word = False
     while i < len(sentence):
+        if sentence[i] == vocab_to_int[' ']:
+            changed_word = False
+        elif changed_word:
+            noisy_sentence.append(sentence[i])
+            i += 1
+            continue
+
         random = np.random.uniform(0,1,1)
 
         # threshold high = Most characters correct
@@ -42,6 +50,7 @@ def noise_maker(sentence, threshold):
             # ~33% chance - Do not type a character
             else:
                 pass
+            changed_word = True
         i += 1
     return noisy_sentence
 
@@ -54,3 +63,11 @@ def switch_gender(sentence):
     sentence = "".join([int_to_vocab[i] for i in sentence])
     gender_bender = " ".join(['en' if w == 'ett' else 'ett' if w == 'en' else w for w in sentence.split()])
     return [vocab_to_int[letter] for letter in gender_bender]
+
+# testing methods
+
+def decode(sentence):
+    return "".join([int_to_vocab[x] for x in sentence])
+
+def encode(sentence):
+    return [vocab_to_int[x] for x in sentence]
