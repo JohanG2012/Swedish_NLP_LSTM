@@ -6,6 +6,8 @@ from math import ceil
 import time
 from argparse import ArgumentParser
 import os
+import yaml
+config = yaml.safe_load(open("./hyperparameters.yaml"))
 
 arguments = ArgumentParser()
 arguments.add_argument("name")
@@ -33,20 +35,6 @@ noisy_two_pass_testing_sorted = pickle.load(open("{}/noisy_two_pass_testing_mini
 #testing_sorted = pickle.load( open( "./data/testing_sorted.pkl", "rb" ) )
 vocab_to_int = pickle.load( open( "{}/vocab_to_int.pkl".format(DATA_FOLDER), "rb" ) )
 int_to_vocab = pickle.load( open( "{}/int_to_vocab.pkl".format(DATA_FOLDER), "rb" ) )
-
-# Training parameters
-epochs = 10000
-batch_size = 32
-num_layers = 4
-rnn_size = 512
-embedding_size = 128
-learning_rate = 0.00001
-direction = 2
-threshold = 0.95
-keep_probability = 0.3
-display_step = 1 # How often (batch) progress should be printed
-stop = 3000 # After how many testing/validation the training should stop, if the batch loss have'nt decreased
-per_epoch = 1 # How many times per epoch the training should be tested/validated
 
 # Pad sentences to the same length
 def pad_sentence_batch(sentence_batch):
@@ -100,7 +88,7 @@ def test(model, noisy_set, set, test_type):
         # Keep track of which batch iteration is being trained
         iteration = 0
         stop_early = 0
-        testing_check = (len(set)//batch_size//per_epoch)-1
+        testing_check = (len(set)//config['batch_size']//1)-1
 
         saver.restore(sess,"{}/lstm.ckpt".format(USE_CHECKPOINT_FOLDER))
         epoch_loss = 1
@@ -111,7 +99,7 @@ def test(model, noisy_set, set, test_type):
         is_correct = 0
 
         # Per batch
-        for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(set, noisy_set, batch_size)):
+        for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(set, noisy_set, config['batch_size'])):
             # Run validation testing
             if batch_i % testing_check == 0 and batch_i > 0:
                 val_acc = []
@@ -133,8 +121,8 @@ def test(model, noisy_set, set, test_type):
 
                     text = noisy_set[i]
                     correct = set[i]
-                    answer_logits = sess.run(model.predictions, {model.inputs: [text]*batch_size,
-                                                             model.inputs_length: [len(text)]*batch_size,
+                    answer_logits = sess.run(model.predictions, {model.inputs: [text]*config['batch_size'],
+                                                             model.inputs_length: [len(text)]*config['batch_size'],
                                                              model.targets_length: [len(text)+1],
                                                              model.keep_prob: [1.0]})[0]
 
@@ -172,10 +160,10 @@ def test(model, noisy_set, set, test_type):
                 return is_correct / tested
 
 def test_lstm_model():
-    for keep_probability in [0.3]:
-        for num_layers in [4]:
-            for threshold in [0.95]:
-                model = build_graph(keep_probability, rnn_size, num_layers, batch_size, learning_rate, embedding_size, direction)
+    for config['keep_probability'] in [0.3]:
+        for config['num_layers'] in [4]:
+            for config['threshold'] in [0.95]:
+                model = build_graph(config['keep_probability'], config['rnn_size'], config['num_layers'], config['batch_size'], config['learning_rate'], config['embedding_size'], config['direction'])
                 total = 0
                 total += test(model,noisy_typos_testing_sorted, typos_testing_sorted, "typos")
                 total += test(model,noisy_gender_testing_sorted, gender_testing_sorted, "gender")

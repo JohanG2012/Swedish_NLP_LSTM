@@ -5,6 +5,8 @@ import numpy as np
 import time
 from argparse import ArgumentParser
 import os
+import yaml
+config = yaml.safe_load(open("./hyperparameters.yaml"))
 
 arguments = ArgumentParser()
 arguments.add_argument("name")
@@ -25,15 +27,6 @@ vocab_to_int = pickle.load( open( "{}/vocab_to_int.pkl".format(DATA_FOLDER), "rb
 int_to_vocab = pickle.load( open( "{}/int_to_vocab.pkl".format(DATA_FOLDER), "rb" ) )
 
 # Training parameters
-epochs = 10000
-batch_size = 64
-num_layers = 4
-rnn_size = 512
-embedding_size = 128
-learning_rate = 0.0005
-direction = 2
-threshold = 0.9
-keep_probability = 0.5
 display_step = 1 # How often (batch) progress should be printed
 stop = 10 # After how many testing/validation the training should stop, if the batch loss have'nt decreased
 per_epoch = 1 # How many times per epoch the training should be tested/validated
@@ -91,7 +84,7 @@ def train(model, epochs):
         # Keep track of which batch iteration is being trained
         iteration = 0
         stop_early = 0
-        testing_check = (len(training_sorted)//batch_size//per_epoch)-1
+        testing_check = (len(training_sorted)//config['batch_size']//per_epoch)-1
         try:
             epoch_i = int(open(tensorflow_log,'r').read().split('\n')[-2])+1
             validrestore = float(open("{0}/{1}".format(CHECKPOINT_FOLDER, validation_restore),'r').read().split('\n')[-2])
@@ -111,14 +104,14 @@ def train(model, epochs):
             train_acc = []
 
             # Per batch
-            for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(training_sorted, noisy_training_sorted, batch_size)):
+            for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(training_sorted, noisy_training_sorted, config['batch_size'])):
                 start_time = time.time()
                 summary, loss, _ = sess.run([model.merged, model.cost, model.train_op],
                                              {model.inputs: input_batch,
                                               model.targets: target_batch,
                                               model.inputs_length: input_length,
                                               model.targets_length: target_length,
-                                              model.keep_prob: keep_probability})
+                                              model.keep_prob: config['keep_probability']})
 
                 batch_loss += loss
                 end_time = time.time()
@@ -131,7 +124,7 @@ def train(model, epochs):
                           .format(epoch_i,
                                   epochs,
                                   batch_i,
-                                  len(training_sorted) // batch_size,
+                                  len(training_sorted) // config['batch_size'],
                                   batch_loss / display_step,
                                   batch_time))
                     # Reset
@@ -143,7 +136,7 @@ def train(model, epochs):
                     val_acc = []
                     batch_loss_testing = 0
                     batch_time_testing = 0
-                    for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(testing_sorted, noisy_testing_sorted, batch_size)):
+                    for batch_i, (input_batch, target_batch, input_length, target_length) in enumerate(get_batches(testing_sorted, noisy_testing_sorted, config['batch_size'])):
                         start_time_testing = time.time()
                         summary, loss = sess.run([model.merged, model.cost],
                                                      {model.inputs: input_batch,
@@ -172,8 +165,8 @@ def train(model, epochs):
                     for i in range(10, 20):
                         text = noisy_testing_sorted[i]
                         correct = testing_sorted[i]
-                        answer_logits = sess.run(model.predictions, {model.inputs: [text]*batch_size,
-                                                                 model.inputs_length: [len(text)]*batch_size,
+                        answer_logits = sess.run(model.predictions, {model.inputs: [text]*config['batch_size'],
+                                                                 model.inputs_length: [len(text)]*config['batch_size'],
                                                                  model.targets_length: [len(text)+1],
                                                                  model.keep_prob: [1.0]})[0]
 
@@ -216,11 +209,11 @@ def train(model, epochs):
                 break
 
 def train_lstm_model():
-    for keep_probability in [0.3]:
-        for num_layers in [4]:
-            for threshold in [0.95]:
-                model = build_graph(keep_probability, rnn_size, num_layers, batch_size, learning_rate, embedding_size, direction)
-                train(model, epochs)
+    for config['keep_probability'] in [0.3]:
+        for config['num_layers'] in [4]:
+            for config['threshold'] in [0.95]:
+                model = build_graph(config['keep_probability'], config['rnn_size'], config['num_layers'], config['batch_size'], config['learning_rate'], config['embedding_size'], config['direction'])
+                train(model, config['epochs'])
 
 if __name__ == "__main__":
     train_lstm_model()
